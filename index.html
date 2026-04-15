@@ -50,12 +50,13 @@
         .canvas-box { border: 1px solid #111; flex: 1; position: relative; background: radial-gradient(circle at center, #0a0a0a 0%, #000 100%); }
         canvas { width: 100%; height: 100%; display: block; }
 
-        /* DEX TABLE */
+        /* MARKET WATCH TABLE */
         .table-container { flex: 1; overflow-y: hidden; border: 1px solid #111; padding: 10px; }
         table { width: 100%; font-size: 0.65rem; border-collapse: collapse; }
-        th { text-align: left; padding: 5px; color: #555; border-bottom: 1px solid #222; }
-        td { padding: 5px; border-bottom: 1px solid #0a0a0a; }
-        .row-alert { background: rgba(0,240,255,0.15); border-left: 2px solid #00f0ff; }
+        th { text-align: left; padding: 8px 5px; color: #555; border-bottom: 1px solid #222; }
+        td { padding: 8px 5px; border-bottom: 1px solid #0a0a0a; transition: 0.2s; }
+        .row-alert td { background: rgba(0,240,255,0.1); color: #00f0ff !important; font-weight: bold; }
+        .row-success td { background: rgba(63,185,80,0.2); }
 
         /* TERMINAL */
         .terminal { flex: 1; overflow: hidden; font-size: 0.65rem; line-height: 1.6; display: flex; flex-direction: column; justify-content: flex-end; border: 1px solid #111; padding: 10px; background: #020202;}
@@ -65,7 +66,7 @@
 <body>
 
     <header>
-        <div class="logo">◆ OPENCLAW_AI <span class="dim" style="font-size: 0.7rem;">// HIGH FREQUENCY NODE</span></div>
+        <div class="logo">◆ OPENCLAW_AI <span class="dim" style="font-size: 0.7rem;">// HFT MULTI-PAIR NODE</span></div>
         <div class="controls">
             <button class="btn btn-engine" id="engineBtn" onclick="startEngine()" disabled>
                 <div class="status-dot" id="engineDot"></div>
@@ -91,12 +92,12 @@
                 <div><div class="dim">LATENCY</div><div class="highlight" id="pingTxt">--</div></div>
             </div>
 
-            <h2 style="margin-top: 30px;">▶ SMART CONTRACT LINK</h2>
+            <h2 style="margin-top: 30px;">▶ SYSTEM STATUS</h2>
             <div style="font-size: 0.65rem; line-height: 1.8; color: #888; margin-top: 10px;">
-                CONTRACT: <span class="dim" id="contractAddr">0x0b7... (Live)</span><br>
+                CONTRACT: <span class="dim" id="contractAddr">0x019...FdfD</span><br>
                 BACKEND BOT: <span class="dim" id="botStatus">Offline</span><br>
-                GAS METHOD: <span class="highlight">AUTO-SIGN (NO POPUP)</span><br>
-                STRATEGY: <span class="highlight">ATOMIC FLASH LOAN</span>
+                GAS METHOD: <span class="highlight">DYNAMIC GWEI</span><br>
+                STRATEGY: <span class="highlight">MULTI-PAIR MEV (DRY RUN)</span>
             </div>
         </div>
 
@@ -112,11 +113,12 @@
                 </div>
             </div>
 
-            <h2>▶ ON-CHAIN DEX MONITORING (WMATIC/USDT)</h2>
+            <h2>▶ REAL-TIME MARKET RADAR (BINANCE VS DEX)</h2>
             <div class="table-container">
                 <table>
-                    <thead><tr><th>DEX PROTOCOL</th><th>BUY (ASK)</th><th>SELL (BID)</th><th style="text-align:right;">GAP</th></tr></thead>
-                    <tbody id="dexBody"></tbody>
+                    <thead><tr><th>TARGET PAIR</th><th>LIVE SPREAD</th><th>NETWORK BLOCK</th><th style="text-align:right;">ACTION STATUS</th></tr></thead>
+                    <tbody id="pairBody">
+                        </tbody>
                 </table>
             </div>
         </div>
@@ -128,12 +130,23 @@
     </div>
 
 <script>
-    // --- STATE VARIABLES ---
     let isConnected = false;
     let engineRunning = false;
     let currentPnl = 0.00;
     
-    // --- 1. REAL METAMASK CONNECTION ---
+    // SETUP WATCHLIST UI
+    const watchList = ["MATICUSDT", "ETHUSDT", "BTCUSDT", "LINKUSDT", "AAVEUSDT"];
+    const pairBody = document.getElementById('pairBody');
+    watchList.forEach(pair => {
+        pairBody.innerHTML += `<tr id="row-${pair}">
+            <td style="color:#fff; font-weight:bold;">${pair}</td>
+            <td style="color:#555" id="spread-${pair}">--</td>
+            <td style="color:#555" id="block-${pair}">--</td>
+            <td style="text-align:right; color:#555" id="status-${pair}">STANDBY</td>
+        </tr>`;
+    });
+
+    // 1. WALLET CONNECTION
     async function connectWallet() {
         const wBtn = document.getElementById('walletBtn');
         const wTxt = document.getElementById('walletText');
@@ -144,24 +157,20 @@
         if (typeof window.ethereum !== 'undefined' && window.location.protocol !== 'file:') {
             try {
                 const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
-                const provider = new ethers.providers.Web3Provider(window.ethereum);
-                const balance = await provider.getBalance(accounts[0]);
-                
-                document.getElementById('maticBalance').innerText = parseFloat(ethers.utils.formatEther(balance)).toFixed(2);
                 wTxt.innerText = accounts[0].substring(0, 6) + "..." + accounts[0].substring(38);
+                document.getElementById('maticBalance').innerText = "LIVE";
                 wBtn.className = "btn connected";
                 isConnected = true;
                 
-                addLog(`[SYSTEM] MetaMask Connected. Ready for Auto-Bot execution.`, "#3fb950");
-                
+                addLog(`[SYSTEM] MetaMask Connected. Ready for Multi-Pair Scan.`, "#3fb950");
                 engineBtn.disabled = false;
                 document.getElementById('engineText').innerText = "START NEURAL ENGINE";
-                
             } catch (err) {
                 wTxt.innerText = "FAILED";
                 setTimeout(() => wTxt.innerText = "CONNECT WALLET", 2000);
             }
         } else {
+            // Local Test Mode fallback
             wTxt.innerText = "0x7A1...3f1 (Local)";
             wBtn.className = "btn connected";
             document.getElementById('maticBalance').innerText = "6.39";
@@ -172,28 +181,21 @@
         }
     }
 
-    // --- 2. ENGINE ACTIVATION (REAL SOCKET CONNECTION) ---
+    // 2. SOCKET.IO ENGINE
     let socketConnected = false;
     function startEngine() {
-        if(!isConnected) return;
-        if(engineRunning) return; // Prevent double clicks
+        if(!isConnected || engineRunning) return;
         engineRunning = true;
         
         const eBtn = document.getElementById('engineBtn');
         eBtn.className = "btn btn-engine active";
         document.getElementById('engineText').innerText = "ENGINE ACTIVE & LISTENING";
         document.getElementById('botStatus').innerHTML = "<span style='color:#00f0ff'>ONLINE (Socket Linked)</span>";
-        document.getElementById('pingTxt').innerText = "18ms";
+        document.getElementById('pingTxt').innerText = "12ms";
         
-        addLog(`[CORE] UI Bridge Active. Awaiting REAL signals from bot.js...`, "#00f0ff");
+        addLog(`[CORE] UI Bridge Active. Awaiting REAL Market Scans from bot.js...`, "#00f0ff");
         
-        // Visual scanning effect (just to show it's monitoring real prices, no fake profits)
-        setInterval(fluctuatePrices, 800);
-        setInterval(generateIdleLogs, 3000); 
-
-        // ---------------------------------------------------------
-        // THE REAL CONNECTION: Linking UI to your black terminal
-        // ---------------------------------------------------------
+        // Connect to your local backend
         const socket = io('http://localhost:3001');
 
         socket.on('connect', () => {
@@ -203,19 +205,56 @@
             }
         });
 
-        // 🟢 THIS ONLY RUNS WHEN bot.js SENDS A REAL PROFIT SIGNAL
+        // 🟢 REAL-TIME SCANNING LISTENER (Updates Milliseconds)
+        socket.on('live_scan', (data) => {
+            if(!engineRunning) return;
+            const spreadEl = document.getElementById(`spread-${data.pair}`);
+            const blockEl = document.getElementById(`block-${data.pair}`);
+            const statusEl = document.getElementById(`status-${data.pair}`);
+            const rowEl = document.getElementById(`row-${data.pair}`);
+
+            if(spreadEl) {
+                spreadEl.innerText = data.spread + "%";
+                blockEl.innerText = data.block;
+                
+                const spreadVal = parseFloat(data.spread);
+                
+                // Visual Strike Warning if spread is high (Close to 0.40%)
+                if(spreadVal > 0.35) {
+                    spreadEl.style.color = "#00f0ff";
+                    statusEl.innerHTML = "<span style='color:#00f0ff'>⚡ STRIKE LOCKED</span>";
+                    rowEl.className = "row-alert";
+                } else {
+                    spreadEl.style.color = "#888";
+                    statusEl.innerHTML = "SCANNING...";
+                    rowEl.className = "";
+                }
+            }
+        });
+
+        // 🟢 REAL TRADE EXECUTION LISTENER
         socket.on('trade_success', (data) => {
             currentPnl += data.profit;
             
+            // PNL Update
             const pnlEl = document.getElementById('pnl');
             pnlEl.innerText = "+$" + currentPnl.toFixed(2);
             pnlEl.className = "pnl-value up";
-            setTimeout(() => pnlEl.className = "pnl-value", 1000); // Visual pop
+            setTimeout(() => pnlEl.className = "pnl-value", 1000);
             
             document.getElementById('progressTxt').innerText = ((currentPnl / 100) * 100).toFixed(1) + "%";
             
-            // Terminal log with real data from backend
-            addLog(`>> [SUCCESS] Real Arbitrage Executed! Net Profit: $${data.profit.toFixed(2)} | Hash: ${data.hash || 'On-Chain'}`, "#3fb950");
+            // Highlight Table Row
+            const rowEl = document.getElementById(`row-${data.pair}`);
+            if(rowEl) {
+                rowEl.className = "row-success";
+                document.getElementById(`status-${data.pair}`).innerHTML = "<span style='color:#3fb950'>✅ EXECUTED</span>";
+                setTimeout(() => { if(rowEl.className === "row-success") rowEl.className = ""; }, 3000);
+            }
+
+            // Terminal Log
+            addLog(`>> [SUCCESS] Trade Executed: ${data.pair} | Net Profit: $${data.profit.toFixed(2)}`, "#3fb950");
+            addLog(`>> Hash: ${data.hash}`, "#555");
         });
         
         socket.on('connect_error', () => {
@@ -226,17 +265,17 @@
         });
     }
 
-    // --- 3. TERMINAL LOGIC ---
+    // 3. TERMINAL LOGIC
     const terminal = document.getElementById('terminal');
     function getTimestamp() { const d = new Date(); return `${d.getHours()}:${d.getMinutes()}:${d.getSeconds()}.${d.getMilliseconds()}`; }
     
     function addLog(msg, color = "#888") {
         if(terminal.children.length > 40) terminal.removeChild(terminal.firstChild);
         const p = document.createElement('div');
-        const hex = Math.floor(Math.random()*16777215).toString(16);
         p.style.marginBottom = "2px";
         
         if(color === "#888") {
+            const hex = Math.floor(Math.random()*16777215).toString(16);
             p.innerHTML = `<span class="log-time">[${getTimestamp()}]</span> <span style="color:#444">[0x${hex}]</span> <span style="color:${color};">${msg}</span>`;
         } else {
             p.innerHTML = `<span class="log-time">[${getTimestamp()}]</span> <span style="color:${color}; font-weight:bold;">${msg}</span>`;
@@ -246,32 +285,7 @@
     }
     addLog("System Dormant. Connect wallet to proceed.");
 
-    const idleLogs = ["Scanning Polygon mempool via backend...", "Waiting for viable spread threshold > 1.0%...", "Node connection stable. No trades executed.", "Evaluating optimal routing paths..."];
-    function generateIdleLogs() { if(engineRunning) addLog(idleLogs[Math.floor(Math.random() * idleLogs.length)]); }
-
-    // --- 4. DEX GRID (Visual monitoring only, no fake triggers) ---
-    const dexNames = ["Uniswap V3", "QuickSwap", "SushiSwap", "Balancer V2", "Curve", "Camelot", "ApeSwap", "KyberSwap", "Dfyn", "Meshswap"];
-    const dexBody = document.getElementById('dexBody');
-    
-    dexNames.forEach((dex, index) => {
-        dexBody.innerHTML += `<tr id="dex-${index}">
-            <td style="color:#fff">${dex}</td>
-            <td style="color:#f85149" id="buy-${index}">--</td>
-            <td style="color:#3fb950" id="sell-${index}">--</td>
-            <td style="text-align:right; color:#555" id="spread-${index}">--</td>
-        </tr>`;
-    });
-
-    function fluctuatePrices() {
-        if(!engineRunning) return;
-        const idx = Math.floor(Math.random() * dexNames.length);
-        const bPrice = 0.8400 + (Math.random() * 0.0050);
-        document.getElementById(`buy-${idx}`).innerText = "$" + bPrice.toFixed(4);
-        document.getElementById(`sell-${idx}`).innerText = "$" + (bPrice + 0.0002).toFixed(4);
-        document.getElementById(`spread-${idx}`).innerText = "0.0" + Math.floor(Math.random()*4+1) + "%";
-    }
-
-    // --- 5. NEURAL CANVASES ---
+    // 4. NEURAL CANVASES (Animations)
     const topCanvas = document.getElementById('topologyCanvas');
     const ctxTop = topCanvas.getContext('2d');
     const waveCanvas = document.getElementById('waveCanvas');
