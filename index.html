@@ -195,8 +195,8 @@
         
         addLog(`[CORE] UI Bridge Active. Awaiting REAL Market Scans from bot.js...`, "#00f0ff");
         
-        // Connect to your local backend
-        const socket = io('http://localhost:3001');
+        // Connect to your Cloud HFT Backend
+        const socket = io('https://crispy-adventure-v6xv99xp7gj62w6j5-8080.app.github.dev');
 
         socket.on('connect', () => {
             if(!socketConnected) {
@@ -205,7 +205,7 @@
             }
         });
 
-        // 🟢 REAL-TIME SCANNING LISTENER (Updates Milliseconds)
+        // 🟢 REAL-TIME SCANNING LISTENER
         socket.on('live_scan', (data) => {
             if(!engineRunning) return;
             const spreadEl = document.getElementById(`spread-${data.pair}`);
@@ -219,7 +219,6 @@
                 
                 const spreadVal = parseFloat(data.spread);
                 
-                // Visual Strike Warning if spread is high (Close to 0.40%)
                 if(spreadVal > 0.35) {
                     spreadEl.style.color = "#00f0ff";
                     statusEl.innerHTML = "<span style='color:#00f0ff'>⚡ STRIKE LOCKED</span>";
@@ -236,7 +235,6 @@
         socket.on('trade_success', (data) => {
             currentPnl += data.profit;
             
-            // PNL Update
             const pnlEl = document.getElementById('pnl');
             pnlEl.innerText = "+$" + currentPnl.toFixed(2);
             pnlEl.className = "pnl-value up";
@@ -244,7 +242,6 @@
             
             document.getElementById('progressTxt').innerText = ((currentPnl / 100) * 100).toFixed(1) + "%";
             
-            // Highlight Table Row
             const rowEl = document.getElementById(`row-${data.pair}`);
             if(rowEl) {
                 rowEl.className = "row-success";
@@ -252,7 +249,6 @@
                 setTimeout(() => { if(rowEl.className === "row-success") rowEl.className = ""; }, 3000);
             }
 
-            // Terminal Log
             addLog(`>> [SUCCESS] Trade Executed: ${data.pair} | Net Profit: $${data.profit.toFixed(2)}`, "#3fb950");
             addLog(`>> Hash: ${data.hash}`, "#555");
         });
@@ -285,7 +281,7 @@
     }
     addLog("System Dormant. Connect wallet to proceed.");
 
-    // 4. NEURAL CANVASES (Animations)
+    // 4. NEURAL CANVASES
     const topCanvas = document.getElementById('topologyCanvas');
     const ctxTop = topCanvas.getContext('2d');
     const waveCanvas = document.getElementById('waveCanvas');
