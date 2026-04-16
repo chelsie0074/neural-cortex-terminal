@@ -3,133 +3,136 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OpenClaw AI | BSC God-Mode Terminal</title>
+    <title>OpenClaw AI | Dark Forest MEV Terminal</title>
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
     <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script> 
     
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
+        
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { background-color: #050505; color: #b0b0b0; font-family: 'Courier New', Courier, monospace; overflow: hidden; height: 100vh; display: flex; flex-direction: column; }
-        
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-track { background: #000; }
+        ::-webkit-scrollbar-thumb { background: #00ff00; }
+
+        body { 
+            background-color: #000000; 
+            color: #00ff00; 
+            font-family: 'Share Tech Mono', monospace; 
+            overflow: hidden; 
+            height: 100vh; 
+            display: flex; 
+            flex-direction: column; 
+            position: relative;
+        }
+
+        /* CRT Scanline Effect */
+        body::before {
+            content: " "; display: block; position: absolute; top: 0; left: 0; bottom: 0; right: 0;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+            z-index: 100; background-size: 100% 2px, 3px 100%; pointer-events: none; opacity: 0.8;
+        }
+
         /* HEADER */
-        header { display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; border-bottom: 1px solid #222; background: #000; }
-        .logo { font-size: 1.2rem; font-weight: bold; color: #f0b90b; letter-spacing: 2px; } /* BSC Gold */
-        .controls { display: flex; gap: 10px; }
+        header { display: flex; justify-content: space-between; align-items: center; padding: 10px 20px; border-bottom: 1px solid #00ff00; background: #020202; }
+        .logo { font-size: 1.5rem; font-weight: bold; color: #00ff00; text-shadow: 0 0 10px #00ff00; }
+        .controls { display: flex; gap: 15px; }
         
-        .btn { background: transparent; border: 1px solid #555; color: #fff; padding: 6px 15px; font-family: inherit; font-size: 0.8rem; cursor: pointer; transition: 0.3s; display: flex; align-items: center; gap: 8px;}
-        .btn:hover { border-color: #f0b90b; color: #f0b90b; }
-        .btn.connected { border-color: #3fb950; color: #3fb950; background: rgba(63,185,80,0.1); box-shadow: 0 0 10px rgba(63,185,80,0.2); }
-        .btn-engine { border-color: #f85149; color: #f85149; }
-        .btn-engine.active { border-color: #00f0ff; color: #00f0ff; background: rgba(0,240,255,0.1); box-shadow: 0 0 15px rgba(0,240,255,0.3); animation: pulse 2s infinite; }
+        .btn { background: #000; border: 1px solid #00ff00; color: #00ff00; padding: 8px 20px; font-family: inherit; font-size: 0.9rem; cursor: pointer; text-transform: uppercase; transition: 0.2s; box-shadow: 0 0 5px rgba(0,255,0,0.2);}
+        .btn:hover { background: #00ff00; color: #000; box-shadow: 0 0 15px #00ff00; }
+        .btn:disabled { border-color: #333; color: #333; box-shadow: none; cursor: not-allowed;}
         
-        .status-dot { width: 8px; height: 8px; border-radius: 50%; background: #f85149; }
-        .connected .status-dot { background: #3fb950; }
-        .active .status-dot { background: #00f0ff; }
-        
-        @keyframes pulse { 0% {box-shadow: 0 0 5px rgba(0,240,255,0.2);} 50% {box-shadow: 0 0 20px rgba(0,240,255,0.6);} 100% {box-shadow: 0 0 5px rgba(0,240,255,0.2);} }
+        .btn-engine.active { border-color: #00ffff; color: #00ffff; box-shadow: 0 0 15px #00ffff; }
+        .btn-engine.active:hover { background: #00ffff; color: #000; }
 
         /* LAYOUT */
-        .container { display: grid; grid-template-columns: 280px 1fr 380px; gap: 15px; padding: 15px; height: calc(100vh - 65px); }
-        h2 { font-size: 0.75rem; letter-spacing: 2px; color: #888; text-transform: uppercase; margin-bottom: 10px; border-bottom: 1px dashed #333; padding-bottom: 5px; }
+        .container { display: grid; grid-template-columns: 300px 1fr 450px; gap: 20px; padding: 20px; height: calc(100vh - 60px); }
+        h2 { font-size: 0.9rem; color: #00ffff; text-transform: uppercase; margin-bottom: 15px; border-bottom: 1px solid #00ffff; padding-bottom: 5px; text-shadow: 0 0 5px #00ffff; }
         
-        .highlight { color: #f0b90b; text-shadow: 0 0 5px rgba(240,185,11,0.3); }
-        .green { color: #3fb950; text-shadow: 0 0 8px rgba(63,185,80,0.5); font-weight: bold;}
-        .dim { color: #555; }
-
         /* PANELS */
-        .panel { border: 1px solid #1a1a1a; padding: 15px; background: #0a0a0a; display: flex; flex-direction: column; overflow: hidden; position: relative;}
+        .panel { border: 1px solid #00ff00; padding: 15px; background: rgba(0, 20, 0, 0.4); display: flex; flex-direction: column; overflow: hidden; box-shadow: inset 0 0 10px rgba(0,255,0,0.1);}
         
         /* METRICS */
-        .pnl-value { font-size: 3rem; font-weight: bold; color: #fff; letter-spacing: -1px; margin: 10px 0; font-family: Arial, sans-serif; transition: color 0.3s;}
-        .pnl-value.up { color: #f0b90b; text-shadow: 0 0 20px rgba(240,185,11,0.6); }
-        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; font-size: 0.75rem; margin-top: 15px; }
+        .pnl-value { font-size: 3.5rem; color: #00ff00; text-shadow: 0 0 20px #00ff00; margin: 10px 0; }
+        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; font-size: 0.85rem; margin-top: 15px; }
+        .stats-grid div span { color: #00ffff; display: block; font-size: 1.2rem; margin-top: 5px; text-shadow: 0 0 5px #00ffff;}
 
-        /* CANVASES */
-        .visual-container { display: flex; gap: 10px; height: 220px; margin-bottom: 15px; }
-        .canvas-box { border: 1px solid #111; flex: 1; position: relative; background: radial-gradient(circle at center, #111 0%, #000 100%); }
-        canvas { width: 100%; height: 100%; display: block; }
-
-        /* MARKET WATCH TABLE (SCROLLABLE) */
-        .table-container { flex: 1; overflow-y: auto; border: 1px solid #111; padding: 10px; background: #050505; }
-        /* Custom Scrollbar */
-        .table-container::-webkit-scrollbar { width: 6px; }
-        .table-container::-webkit-scrollbar-track { background: #000; }
-        .table-container::-webkit-scrollbar-thumb { background: #333; border-radius: 3px; }
-        
-        table { width: 100%; font-size: 0.7rem; border-collapse: collapse; }
-        th { text-align: left; padding: 8px 5px; color: #666; border-bottom: 1px solid #222; position: sticky; top: 0; background: #050505; z-index: 10;}
-        td { padding: 8px 5px; border-bottom: 1px solid #111; transition: 0.2s; }
-        .row-alert td { background: rgba(0,240,255,0.05); color: #00f0ff !important; font-weight: bold; }
-        .row-success td { background: rgba(240,185,11,0.15); color: #f0b90b !important; font-weight: bold; }
+        /* MARKET WATCH TABLE */
+        .table-container { flex: 1; overflow-y: auto; border: 1px solid #00ff00; padding: 10px; background: #000; }
+        table { width: 100%; font-size: 0.8rem; border-collapse: collapse; }
+        th { text-align: left; padding: 8px 5px; color: #00ffff; border-bottom: 1px dashed #00ff00; position: sticky; top: 0; background: #000; }
+        td { padding: 8px 5px; border-bottom: 1px dotted #222; }
+        .row-alert td { background: rgba(0, 255, 255, 0.1); color: #00ffff !important; text-shadow: 0 0 5px #00ffff; }
+        .row-success td { background: rgba(0, 255, 0, 0.2); color: #00ff00 !important; font-weight: bold; text-shadow: 0 0 10px #00ff00; }
+        .dim { color: #555; }
 
         /* TERMINAL */
-        .terminal { flex: 1; overflow-y: auto; font-size: 0.7rem; line-height: 1.6; display: flex; flex-direction: column; border: 1px solid #111; padding: 10px; background: #020202;}
-        .log-time { color: #555; margin-right: 8px; }
-        .terminal a { color: #f0b90b; text-decoration: none; border-bottom: 1px dashed #f0b90b;}
-        .terminal a:hover { color: #fff; border-color: #fff;}
+        .terminal-container { flex: 1; display: flex; flex-direction: column; border: 1px solid #00ff00; background: #000; position: relative;}
+        .terminal-header { background: #00ff00; color: #000; padding: 5px 10px; font-weight: bold; font-size: 0.8rem; display: flex; justify-content: space-between;}
+        .terminal { flex: 1; overflow-y: auto; padding: 10px; font-size: 0.75rem; line-height: 1.5; }
+        .log-time { color: #00ffff; margin-right: 10px; }
+        
+        /* CANVAS */
+        .canvas-container { height: 200px; border: 1px solid #00ff00; margin-bottom: 20px; background: #000; position: relative; overflow: hidden; }
+        canvas { width: 100%; height: 100%; display: block; }
+        .overlay-text { position: absolute; top: 5px; left: 10px; color: #00ffff; font-size: 0.7rem; text-shadow: 0 0 5px #00ffff;}
     </style>
 </head>
 <body>
 
     <header>
-        <div class="logo">◆ OPENCLAW_AI <span class="dim" style="font-size: 0.7rem;">// BSC GOD-MODE TERMINAL</span></div>
+        <div class="logo">ROOT@OPENCLAW:~# BSC_MEV_NODE</div>
         <div class="controls">
-            <button class="btn btn-engine" id="engineBtn" onclick="startEngine()" disabled>
-                <div class="status-dot" id="engineDot"></div>
-                <span id="engineText">ENGINE DORMANT</span>
-            </button>
-            <button class="btn" id="walletBtn" onclick="connectWallet()">
-                <div class="status-dot" id="walletDot"></div>
-                <span id="walletText">CONNECT WALLET</span>
-            </button>
+            <button class="btn btn-engine" id="engineBtn" onclick="startEngine()" disabled>[ INIT_ENGINE ]</button>
+            <button class="btn" id="walletBtn" onclick="connectWallet()">[ AUTH_WALLET ]</button>
         </div>
     </header>
 
     <div class="container">
         <div class="panel">
-            <h2>▶ BSC PERFORMANCE METRICS</h2>
-            <div class="dim" style="font-size: 0.65rem;">CUMULATIVE NET PROFIT (USDT)</div>
+            <h2>>_ SESSION_METRICS</h2>
+            <div style="color: #555;">NET_EXTRACTED_USDT</div>
             <div class="pnl-value" id="pnl">+$0.00</div>
             
             <div class="stats-grid">
-                <div><div class="dim">DAILY TARGET</div><div class="highlight">$500.00</div></div>
-                <div><div class="dim">GOAL PROGRESS</div><div class="highlight" id="progressTxt">0.0%</div></div>
-                <div><div class="dim">WALLET BNB</div><div class="highlight" id="bnbBalance">--</div></div>
-                <div><div class="dim">LATENCY</div><div class="highlight" id="pingTxt">--</div></div>
+                <div>TARGET_USD <span id="targetTxt">$1000.00</span></div>
+                <div>NODE_PING <span id="pingTxt">-- ms</span></div>
+                <div>WALLET_BNB <span id="bnbBalance">--</span></div>
+                <div>STATUS <span id="botStatus" style="color:#f00; text-shadow: 0 0 5px #f00;">OFFLINE</span></div>
             </div>
 
-            <h2 style="margin-top: 30px;">▶ SYSTEM STATUS</h2>
-            <div style="font-size: 0.65rem; line-height: 2; color: #888; margin-top: 10px;">
-                CONTRACT: <span class="highlight">BSC FLASH SWAP V2</span><br>
-                MATRIX SIZE: <span class="highlight">15 DEXs</span><br>
-                SCAN RATE: <span class="highlight">800ms (Multicall3)</span><br>
-                GAS PROTOCOL: <span style="color:#00f0ff">DYNAMIC + FRONT-RUN</span><br>
-                BACKEND LINK: <span class="dim" id="botStatus">Offline</span>
+            <div style="margin-top: auto; font-size: 0.7rem; color: #444; border-top: 1px dashed #333; padding-top: 10px;">
+                > MATRIX: 15_DEX_FORKS<br>
+                > SYNC: MULTICALL3_RPC<br>
+                > GAS_PROTOCOL: FRONT_RUN_GWEI<br>
+                > TUNNEL: BLOXROUTE_VIP
             </div>
         </div>
 
         <div class="panel">
-            <div class="visual-container">
-                <div class="canvas-box" style="flex: 2;">
-                    <h2 style="position: absolute; top:5px; left:5px; border:none; margin:0; z-index: 2;">▶ LIQUIDITY EXTRACTION MAP</h2>
-                    <canvas id="extractionCanvas"></canvas>
-                </div>
+            <div class="canvas-container">
+                <div class="overlay-text">LIVE LIQUIDITY EXTRACTION MAP</div>
+                <canvas id="matrixCanvas"></canvas>
             </div>
 
-            <h2>▶ LIVE OMNI-MATRIX RADAR</h2>
+            <h2>>_ LIVE_OMNI_MATRIX_FEED</h2>
             <div class="table-container">
                 <table>
-                    <thead><tr><th>TARGET</th><th>BEST ROUTE</th><th>SPREAD</th><th style="text-align:right;">STATUS</th></tr></thead>
-                    <tbody id="pairBody">
-                        </tbody>
+                    <thead><tr><th>ASSET</th><th>ROUTING_PATH</th><th>SPREAD</th><th style="text-align:right;">ACTION</th></tr></thead>
+                    <tbody id="pairBody"></tbody>
                 </table>
             </div>
         </div>
 
-        <div class="panel">
-            <h2>▶ HFT EXECUTION TERMINAL</h2>
-            <div class="terminal" id="terminal"></div>
+        <div class="panel" style="padding: 0; background: #000;">
+            <div class="terminal-container">
+                <div class="terminal-header">
+                    <span>root@execution-node:~</span>
+                    <span>bash - 80x24</span>
+                </div>
+                <div class="terminal" id="terminal"></div>
+            </div>
         </div>
     </div>
 
@@ -138,7 +141,7 @@
     let engineRunning = false;
     let currentPnl = 0.00;
     
-    // 🟢 30-TOKEN WATCHLIST (Synced with bot.js)
+    // BSC Watchlist
     const watchList = [
         "WBNBUSDT", "CAKEUSDT", "DOGEUSDT", "FLOKIUSDT", "BAKEUSDT", "TWTUSDT", 
         "SHIBUSDT", "ETHUSDT", "BTCBUSDT", "XRPUSDT", "ADAUSDT", "LINKUSDT", 
@@ -150,52 +153,46 @@
     const pairBody = document.getElementById('pairBody');
     watchList.forEach(pair => {
         pairBody.innerHTML += `<tr id="row-${pair}">
-            <td style="color:#fff; font-weight:bold;">${pair.replace('USDT', '')}</td>
-            <td style="color:#444; font-size: 0.6rem;" id="route-${pair}">Awaiting Data...</td>
-            <td style="color:#555" id="spread-${pair}">--</td>
-            <td style="text-align:right; color:#555" id="status-${pair}">STANDBY</td>
+            <td>${pair.replace('USDT', '')}</td>
+            <td class="dim" id="route-${pair}">AWAITING_DATA...</td>
+            <td class="dim" id="spread-${pair}">0.00%</td>
+            <td style="text-align:right;" class="dim" id="status-${pair}">STANDBY</td>
         </tr>`;
     });
 
     // 1. WALLET CONNECTION
     async function connectWallet() {
         const wBtn = document.getElementById('walletBtn');
-        const wTxt = document.getElementById('walletText');
-        const engineBtn = document.getElementById('engineBtn');
+        const eBtn = document.getElementById('engineBtn');
         
-        wTxt.innerText = "CONNECTING...";
+        wBtn.innerText = "[ AUTHENTICATING... ]";
 
         if (typeof window.ethereum !== 'undefined' && window.location.protocol !== 'file:') {
             try {
                 const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
-                wTxt.innerText = accounts[0].substring(0, 6) + "..." + accounts[0].substring(38);
-                document.getElementById('bnbBalance').innerText = "LIVE";
-                wBtn.className = "btn connected";
+                wBtn.innerText = `[ ${accounts[0].substring(0, 6)}...${accounts[0].substring(38)} ]`;
+                wBtn.style.background = "#00ff00"; wBtn.style.color = "#000";
+                document.getElementById('bnbBalance').innerText = "LINKED";
                 isConnected = true;
-                
-                addLog(`[SYSTEM] BSC Wallet Linked. Securing connection...`, "#3fb950");
-                engineBtn.disabled = false;
-                document.getElementById('engineText').innerText = "IGNITE GOD MODE";
+                eBtn.disabled = false;
+                addLog(`Access Granted. BSC Wallet linked.`, "#00ff00");
             } catch (err) {
-                wTxt.innerText = "FAILED";
-                setTimeout(() => wTxt.innerText = "CONNECT WALLET", 2000);
+                wBtn.innerText = "[ AUTH_FAILED ]";
+                setTimeout(() => wBtn.innerText = "[ AUTH_WALLET ]", 2000);
             }
         } else {
-            wTxt.innerText = "0xBSC...Admin";
-            wBtn.className = "btn connected";
-            document.getElementById('bnbBalance').innerText = "1.45 BNB";
+            wBtn.innerText = "[ 0xROOT...ADMIN ]";
+            wBtn.style.background = "#00ff00"; wBtn.style.color = "#000";
+            document.getElementById('bnbBalance').innerText = "BYPASS";
             isConnected = true;
-            engineBtn.disabled = false;
-            document.getElementById('engineText').innerText = "IGNITE GOD MODE";
-            addLog(`[SYSTEM] Interface Unlocked. Bypass mode active.`, "#f0b90b");
+            eBtn.disabled = false;
+            addLog(`Local bypass authorized. Engine ready.`, "#00ff00");
         }
     }
 
-    // 2. SOCKET.IO ENGINE (The Brain Link)
-    let socketConnected = false;
-    // UI Anti-Freeze Throttling Mechanism
+    // 2. SOCKET ENGINE (THE BRIDGE)
     let lastUiUpdates = {}; 
-    const UI_THROTTLE_MS = 300; 
+    const UI_THROTTLE_MS = 250; 
 
     function startEngine() {
         if(!isConnected || engineRunning) return;
@@ -203,23 +200,24 @@
         
         const eBtn = document.getElementById('engineBtn');
         eBtn.className = "btn btn-engine active";
-        document.getElementById('engineText').innerText = "SCANNING 15 DEXs";
-        document.getElementById('botStatus').innerHTML = "<span style='color:#00f0ff'>ONLINE (WSS Sync)</span>";
-        document.getElementById('pingTxt').innerText = "8ms";
+        eBtn.innerText = "[ SCANNING_MATRIX ]";
         
-        addLog(`[CORE] Neural Engine Active. Multicall3 deployed across 15 BSC Routers.`, "#00f0ff");
+        const botStatus = document.getElementById('botStatus');
+        botStatus.innerText = "ONLINE";
+        botStatus.style.color = "#00ff00";
+        botStatus.style.textShadow = "0 0 10px #00ff00";
+        document.getElementById('pingTxt').innerText = "12ms";
         
-        // ⚠️ INSERT YOUR BACKEND URL HERE:
-        const socket = io('https://crispy-adventure-v6xv99xp7gj62w6j5-8080.app.github.dev');
+        addLog(`Initiating neural link to bot.js...`, "#00ffff");
+        
+        // 🔴🔴🔴 YOUR BACKEND URL GOES HERE 🔴🔴🔴
+        const socket = io('http://localhost:8080'); // Change this to your Vercel/VPS URL if needed
 
         socket.on('connect', () => {
-            if(!socketConnected) {
-                addLog(`>> [SYSTEM] Secure Socket connected to Backend Matrix!`, "#3fb950");
-                socketConnected = true;
-            }
+            addLog(`WebSocket Connected! Streaming live on-chain data.`, "#00ff00");
         });
 
-        // 🟢 REAL-TIME SCANNING LISTENER (With Anti-Crash Logic)
+        // LIVE SCAN LISTENER
         socket.on('live_scan', (data) => {
             if(!engineRunning) return;
             
@@ -235,82 +233,67 @@
             if(spreadEl) {
                 const spreadVal = parseFloat(data.spread);
                 spreadEl.innerText = spreadVal > 0 ? "+" + data.spread + "%" : "0.00%";
+                routeEl.innerText = data.route || "SYNCING...";
                 
-                // Decode route if provided by backend, else show generic
-                if(data.route) routeEl.innerText = data.route;
-                else routeEl.innerText = "Multicall Scanning...";
-                
-                if(spreadVal > 0.10) { // God Mode Threshold
-                    spreadEl.style.color = "#00f0ff";
-                    routeEl.style.color = "#fff";
-                    statusEl.innerHTML = "<span style='color:#00f0ff'>⚡ PREPARING STRIKE</span>";
+                if(spreadVal > 0.10) { 
+                    spreadEl.style.color = "#00ffff";
+                    routeEl.style.color = "#00ffff";
+                    statusEl.innerText = "LOCKING_TARGET";
+                    statusEl.style.color = "#00ffff";
                     rowEl.className = "row-alert";
                     
-                    // Add terminal log for high spreads
-                    if(Math.random() > 0.7) { 
-                        addLog(`[RADAR] Spread detected on ${data.pair}: ${spreadVal}%`, "#00f0ff");
+                    if(Math.random() > 0.8) { 
+                        addLog(`Inefficiency detected: ${data.pair} [Spread: ${spreadVal}%]`, "#00ffff");
                     }
                 } else {
                     spreadEl.style.color = "#555";
-                    routeEl.style.color = "#444";
-                    statusEl.innerHTML = "SCANNING";
+                    routeEl.style.color = "#555";
+                    statusEl.innerText = "SCANNING";
+                    statusEl.style.color = "#555";
                     rowEl.className = "";
                 }
             }
         });
 
-        // 🟢 REAL TRADE EXECUTION LISTENER
+        // EXECUTION LISTENER
         socket.on('trade_success', (data) => {
             currentPnl += data.profit;
+            document.getElementById('pnl').innerText = "+$" + currentPnl.toFixed(2);
             
-            // Update Top Metrics
-            const pnlEl = document.getElementById('pnl');
-            pnlEl.innerText = "+$" + currentPnl.toFixed(2);
-            pnlEl.className = "pnl-value up";
-            setTimeout(() => pnlEl.className = "pnl-value", 1000);
-            
-            document.getElementById('progressTxt').innerText = ((currentPnl / 500) * 100).toFixed(1) + "%";
-            
-            // Highlight Table Row
             const rowEl = document.getElementById(`row-${data.pair}`);
             if(rowEl) {
                 rowEl.className = "row-success";
-                document.getElementById(`status-${data.pair}`).innerHTML = "<span style='color:#f0b90b'>✅ EXTRACTED</span>";
+                document.getElementById(`status-${data.pair}`).innerText = "PROFIT_EXTRACTED";
                 setTimeout(() => { if(rowEl.className === "row-success") rowEl.className = ""; }, 3000);
             }
 
-            // Terminal Logs with BscScan Link
-            addLog(`>> [KILL SHOT] ${data.pair} Arbitrage Successfully Executed!`, "#f0b90b");
-            addLog(`>> [PROFIT] +$${data.profit.toFixed(2)} USDT deposited to Wallet.`, "#3fb950");
-            addLog(`>> [RECEIPT] <a href="https://bscscan.com/tx/${data.hash}" target="_blank">View on BscScan ↗</a>`, "#fff");
+            addLog(`------------------------------------`, "#00ff00");
+            addLog(`!!! MEV STRIKE SUCCESSFUL !!!`, "#00ff00");
+            addLog(`TARGET: ${data.pair}`, "#fff");
+            addLog(`PROFIT: +$${data.profit.toFixed(2)} USDT`, "#00ff00");
+            addLog(`TX_HASH: ${data.hash}`, "#00ffff");
+            addLog(`------------------------------------`, "#00ff00");
             
-            // TRIGGER THE MONEY FLOW ANIMATION!
-            triggerExtraction();
+            triggerMatrixExtraction();
         });
     }
 
     // 3. TERMINAL LOGIC
     const terminal = document.getElementById('terminal');
-    function getTimestamp() { const d = new Date(); return `${d.getHours().toString().padStart(2,'0')}:${d.getMinutes().toString().padStart(2,'0')}:${d.getSeconds().toString().padStart(2,'0')}`; }
+    function getTimestamp() { const d = new Date(); return `${d.getHours().toString().padStart(2,'0')}:${d.getMinutes().toString().padStart(2,'0')}:${d.getSeconds().toString().padStart(2,'0')}.${d.getMilliseconds().toString().padStart(3,'0')}`; }
     
-    function addLog(msg, color = "#888") {
-        if(terminal.children.length > 50) terminal.removeChild(terminal.firstChild);
+    function addLog(msg, color = "#00ff00") {
+        if(terminal.children.length > 100) terminal.removeChild(terminal.firstChild);
         const p = document.createElement('div');
-        p.style.marginBottom = "4px";
-        
-        if(color === "#888") {
-            const hex = Math.floor(Math.random()*16777215).toString(16);
-            p.innerHTML = `<span class="log-time">[${getTimestamp()}]</span> <span style="color:#333">[0x${hex}]</span> <span style="color:${color};">${msg}</span>`;
-        } else {
-            p.innerHTML = `<span class="log-time">[${getTimestamp()}]</span> <span style="color:${color};">${msg}</span>`;
-        }
+        p.style.marginBottom = "3px";
+        p.innerHTML = `<span class="log-time">[${getTimestamp()}]</span> <span style="color:${color};">${msg}</span>`;
         terminal.appendChild(p);
-        terminal.scrollTop = terminal.scrollHeight; // Auto-scroll
+        terminal.scrollTop = terminal.scrollHeight;
     }
-    addLog("Dashboard initialized. Awaiting user connection.", "#555");
+    addLog("System initialized. Awaiting user auth.");
 
-    // 4. THE LIQUIDITY EXTRACTION ANIMATION CANVAS
-    const canvas = document.getElementById('extractionCanvas');
+    // 4. MATRIX EXTRACTION CANVAS
+    const canvas = document.getElementById('matrixCanvas');
     const ctx = canvas.getContext('2d');
     let particles = [];
     
@@ -320,94 +303,67 @@
     }
     window.addEventListener('resize', resize); resize();
 
-    // The central wallet
-    const walletNode = { radius: 20, pulse: 0 };
-    
-    // Create random "DEX" nodes around the edges
+    const walletNode = { radius: 15, pulse: 0 };
     const dexNodes = [];
     for(let i=0; i<15; i++) {
-        dexNodes.push({
-            angle: (Math.PI * 2 / 15) * i,
-            dist: 100 + Math.random() * 40
-        });
+        dexNodes.push({ angle: (Math.PI * 2 / 15) * i, dist: 80 + Math.random() * 20 });
     }
 
-    function triggerExtraction() {
-        // Find a random DEX to shoot money from
+    function triggerMatrixExtraction() {
         const dex = dexNodes[Math.floor(Math.random() * dexNodes.length)];
         const startX = (canvas.width/2) + Math.cos(dex.angle) * dex.dist;
         const startY = (canvas.height/2) + Math.sin(dex.angle) * dex.dist;
         
-        // Spawn 10-15 particles representing money
-        for(let i=0; i<15; i++) {
+        for(let i=0; i<20; i++) {
             particles.push({
-                x: startX + (Math.random() * 10 - 5),
-                y: startY + (Math.random() * 10 - 5),
-                targetX: canvas.width/2,
-                targetY: canvas.height/2,
-                speed: 0.05 + Math.random() * 0.05,
-                progress: 0,
-                color: Math.random() > 0.5 ? '#f0b90b' : '#3fb950' // Gold or Green
+                x: startX + (Math.random() * 10 - 5), y: startY + (Math.random() * 10 - 5),
+                tx: canvas.width/2, ty: canvas.height/2,
+                speed: 0.03 + Math.random() * 0.05, progress: 0
             });
         }
-        walletNode.pulse = 1; // Make wallet pulse
+        walletNode.pulse = 1; 
     }
 
-    function drawExtraction() {
-        ctx.clearRect(0, 0, canvas.width, canvas.height); 
-        const cx = canvas.width/2;
-        const cy = canvas.height/2;
+    function drawCanvas() {
+        ctx.fillStyle = "rgba(0, 0, 0, 0.2)"; // Trailing effect
+        ctx.fillRect(0, 0, canvas.width, canvas.height); 
+        const cx = canvas.width/2; const cy = canvas.height/2;
 
-        // Draw DEX nodes (idle network lines)
-        ctx.strokeStyle = engineRunning ? 'rgba(0, 240, 255, 0.1)' : 'rgba(255, 255, 255, 0.02)';
+        // Draw Network Lines
+        ctx.strokeStyle = engineRunning ? 'rgba(0, 255, 0, 0.1)' : 'rgba(0, 255, 0, 0.02)';
         ctx.lineWidth = 1;
         dexNodes.forEach(dex => {
             const dx = cx + Math.cos(dex.angle) * dex.dist;
             const dy = cy + Math.sin(dex.angle) * dex.dist;
             ctx.beginPath(); ctx.moveTo(dx, dy); ctx.lineTo(cx, cy); ctx.stroke();
             
-            // Draw DEX dot
-            ctx.fillStyle = engineRunning ? '#222' : '#111';
-            ctx.beginPath(); ctx.arc(dx, dy, 3, 0, Math.PI*2); ctx.fill();
+            ctx.fillStyle = engineRunning ? '#00ffff' : '#111';
+            ctx.fillRect(dx-2, dy-2, 4, 4); // Square nodes for hacker feel
         });
 
-        // Draw Money Particles
+        // Draw Data Packets (Particles)
+        ctx.fillStyle = '#00ff00';
         for (let i = particles.length - 1; i >= 0; i--) {
             let p = particles[i];
             p.progress += p.speed;
-            
-            const currentX = p.x + (p.targetX - p.x) * p.progress;
-            const currentY = p.y + (p.targetY - p.y) * p.progress;
-
-            ctx.fillStyle = p.color;
-            ctx.beginPath(); ctx.arc(currentX, currentY, 2, 0, Math.PI*2); ctx.fill();
-            
-            // Trail
-            ctx.strokeStyle = p.color;
-            ctx.globalAlpha = 0.5;
-            ctx.beginPath(); ctx.moveTo(p.x + (p.targetX - p.x) * (p.progress - 0.1), p.y + (p.targetY - p.y) * (p.progress - 0.1)); ctx.lineTo(currentX, currentY); ctx.stroke();
-            ctx.globalAlpha = 1;
-
+            const currentX = p.x + (p.tx - p.x) * p.progress;
+            const currentY = p.y + (p.ty - p.y) * p.progress;
+            ctx.fillRect(currentX, currentY, 3, 3);
             if (p.progress >= 1) particles.splice(i, 1);
         }
 
-        // Draw Center Wallet Node
+        // Center Wallet
         if(walletNode.pulse > 0) walletNode.pulse -= 0.05;
         const currentRadius = walletNode.radius + (walletNode.pulse * 10);
         
-        ctx.fillStyle = `rgba(240, 185, 11, ${engineRunning ? 0.8 : 0.2})`;
-        ctx.beginPath(); ctx.arc(cx, cy, currentRadius, 0, Math.PI*2); ctx.fill();
-        
-        // Inner Wallet Core
-        ctx.fillStyle = '#fff';
-        ctx.beginPath(); ctx.arc(cx, cy, 8, 0, Math.PI*2); ctx.fill();
+        ctx.strokeStyle = '#00ff00';
+        ctx.beginPath(); ctx.arc(cx, cy, currentRadius, 0, Math.PI*2); ctx.stroke();
+        ctx.fillStyle = '#000'; ctx.fill();
+        ctx.fillStyle = '#00ff00'; ctx.fillText("WALLET", cx - 18, cy + 4);
 
-        requestAnimationFrame(drawExtraction);
+        requestAnimationFrame(drawCanvas);
     } 
-    drawExtraction();
-
-    // (Optional) For testing the animation manually in browser console:
-    // setInterval(triggerExtraction, 5000);
+    drawCanvas();
 </script>
 </body>
 </html>
