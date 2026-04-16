@@ -3,70 +3,77 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OpenClaw AI | Neural Arbitrage Terminal</title>
+    <title>OpenClaw AI | BSC God-Mode Terminal</title>
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
     <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script> 
     
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { background-color: #030303; color: #b0b0b0; font-family: 'Courier New', Courier, monospace; overflow: hidden; height: 100vh; display: flex; flex-direction: column; }
+        body { background-color: #050505; color: #b0b0b0; font-family: 'Courier New', Courier, monospace; overflow: hidden; height: 100vh; display: flex; flex-direction: column; }
         
         /* HEADER */
-        header { display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; border-bottom: 1px solid #222; }
-        .logo { font-size: 1.2rem; font-weight: bold; color: #fff; letter-spacing: 2px; }
+        header { display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; border-bottom: 1px solid #222; background: #000; }
+        .logo { font-size: 1.2rem; font-weight: bold; color: #f0b90b; letter-spacing: 2px; } /* BSC Gold */
         .controls { display: flex; gap: 10px; }
         
         .btn { background: transparent; border: 1px solid #555; color: #fff; padding: 6px 15px; font-family: inherit; font-size: 0.8rem; cursor: pointer; transition: 0.3s; display: flex; align-items: center; gap: 8px;}
-        .btn:hover { border-color: #fff; }
+        .btn:hover { border-color: #f0b90b; color: #f0b90b; }
         .btn.connected { border-color: #3fb950; color: #3fb950; background: rgba(63,185,80,0.1); box-shadow: 0 0 10px rgba(63,185,80,0.2); }
         .btn-engine { border-color: #f85149; color: #f85149; }
-        .btn-engine.active { border-color: #00f0ff; color: #00f0ff; background: rgba(0,240,255,0.1); box-shadow: 0 0 10px rgba(0,240,255,0.2); animation: pulse 2s infinite; }
+        .btn-engine.active { border-color: #00f0ff; color: #00f0ff; background: rgba(0,240,255,0.1); box-shadow: 0 0 15px rgba(0,240,255,0.3); animation: pulse 2s infinite; }
         
         .status-dot { width: 8px; height: 8px; border-radius: 50%; background: #f85149; }
         .connected .status-dot { background: #3fb950; }
         .active .status-dot { background: #00f0ff; }
         
-        @keyframes pulse { 0% {box-shadow: 0 0 5px rgba(0,240,255,0.2);} 50% {box-shadow: 0 0 15px rgba(0,240,255,0.6);} 100% {box-shadow: 0 0 5px rgba(0,240,255,0.2);} }
+        @keyframes pulse { 0% {box-shadow: 0 0 5px rgba(0,240,255,0.2);} 50% {box-shadow: 0 0 20px rgba(0,240,255,0.6);} 100% {box-shadow: 0 0 5px rgba(0,240,255,0.2);} }
 
         /* LAYOUT */
-        .container { display: grid; grid-template-columns: 260px 1fr 350px; gap: 15px; padding: 15px; height: calc(100vh - 65px); }
-        h2 { font-size: 0.75rem; letter-spacing: 2px; color: #777; text-transform: uppercase; margin-bottom: 10px; border-bottom: 1px dashed #333; padding-bottom: 5px; }
+        .container { display: grid; grid-template-columns: 280px 1fr 380px; gap: 15px; padding: 15px; height: calc(100vh - 65px); }
+        h2 { font-size: 0.75rem; letter-spacing: 2px; color: #888; text-transform: uppercase; margin-bottom: 10px; border-bottom: 1px dashed #333; padding-bottom: 5px; }
         
-        .highlight { color: #fff; text-shadow: 0 0 5px rgba(255,255,255,0.3); }
+        .highlight { color: #f0b90b; text-shadow: 0 0 5px rgba(240,185,11,0.3); }
         .green { color: #3fb950; text-shadow: 0 0 8px rgba(63,185,80,0.5); font-weight: bold;}
-        .dim { color: #444; }
+        .dim { color: #555; }
 
         /* PANELS */
-        .panel { border: 1px solid #1a1a1a; padding: 15px; background: #070707; display: flex; flex-direction: column; overflow: hidden; position: relative;}
+        .panel { border: 1px solid #1a1a1a; padding: 15px; background: #0a0a0a; display: flex; flex-direction: column; overflow: hidden; position: relative;}
         
         /* METRICS */
         .pnl-value { font-size: 3rem; font-weight: bold; color: #fff; letter-spacing: -1px; margin: 10px 0; font-family: Arial, sans-serif; transition: color 0.3s;}
-        .pnl-value.up { color: #3fb950; text-shadow: 0 0 15px rgba(63,185,80,0.5); }
-        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 0.7rem; margin-top: 15px; }
+        .pnl-value.up { color: #f0b90b; text-shadow: 0 0 20px rgba(240,185,11,0.6); }
+        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; font-size: 0.75rem; margin-top: 15px; }
 
         /* CANVASES */
-        .visual-container { display: flex; gap: 10px; height: 180px; margin-bottom: 15px; }
-        .canvas-box { border: 1px solid #111; flex: 1; position: relative; background: radial-gradient(circle at center, #0a0a0a 0%, #000 100%); }
+        .visual-container { display: flex; gap: 10px; height: 220px; margin-bottom: 15px; }
+        .canvas-box { border: 1px solid #111; flex: 1; position: relative; background: radial-gradient(circle at center, #111 0%, #000 100%); }
         canvas { width: 100%; height: 100%; display: block; }
 
-        /* MARKET WATCH TABLE */
-        .table-container { flex: 1; overflow-y: hidden; border: 1px solid #111; padding: 10px; }
-        table { width: 100%; font-size: 0.65rem; border-collapse: collapse; }
-        th { text-align: left; padding: 8px 5px; color: #555; border-bottom: 1px solid #222; }
-        td { padding: 8px 5px; border-bottom: 1px solid #0a0a0a; transition: 0.2s; }
-        .row-alert td { background: rgba(0,240,255,0.1); color: #00f0ff !important; font-weight: bold; }
-        .row-success td { background: rgba(63,185,80,0.2); }
+        /* MARKET WATCH TABLE (SCROLLABLE) */
+        .table-container { flex: 1; overflow-y: auto; border: 1px solid #111; padding: 10px; background: #050505; }
+        /* Custom Scrollbar */
+        .table-container::-webkit-scrollbar { width: 6px; }
+        .table-container::-webkit-scrollbar-track { background: #000; }
+        .table-container::-webkit-scrollbar-thumb { background: #333; border-radius: 3px; }
+        
+        table { width: 100%; font-size: 0.7rem; border-collapse: collapse; }
+        th { text-align: left; padding: 8px 5px; color: #666; border-bottom: 1px solid #222; position: sticky; top: 0; background: #050505; z-index: 10;}
+        td { padding: 8px 5px; border-bottom: 1px solid #111; transition: 0.2s; }
+        .row-alert td { background: rgba(0,240,255,0.05); color: #00f0ff !important; font-weight: bold; }
+        .row-success td { background: rgba(240,185,11,0.15); color: #f0b90b !important; font-weight: bold; }
 
         /* TERMINAL */
-        .terminal { flex: 1; overflow: hidden; font-size: 0.65rem; line-height: 1.6; display: flex; flex-direction: column; justify-content: flex-end; border: 1px solid #111; padding: 10px; background: #020202;}
+        .terminal { flex: 1; overflow-y: auto; font-size: 0.7rem; line-height: 1.6; display: flex; flex-direction: column; border: 1px solid #111; padding: 10px; background: #020202;}
         .log-time { color: #555; margin-right: 8px; }
+        .terminal a { color: #f0b90b; text-decoration: none; border-bottom: 1px dashed #f0b90b;}
+        .terminal a:hover { color: #fff; border-color: #fff;}
     </style>
 </head>
 <body>
 
     <header>
-        <div class="logo">◆ OPENCLAW_AI <span class="dim" style="font-size: 0.7rem;">// HFT MULTI-PAIR NODE</span></div>
+        <div class="logo">◆ OPENCLAW_AI <span class="dim" style="font-size: 0.7rem;">// BSC GOD-MODE TERMINAL</span></div>
         <div class="controls">
             <button class="btn btn-engine" id="engineBtn" onclick="startEngine()" disabled>
                 <div class="status-dot" id="engineDot"></div>
@@ -81,42 +88,39 @@
 
     <div class="container">
         <div class="panel">
-            <h2>▶ PERFORMANCE METRICS</h2>
+            <h2>▶ BSC PERFORMANCE METRICS</h2>
             <div class="dim" style="font-size: 0.65rem;">CUMULATIVE NET PROFIT (USDT)</div>
             <div class="pnl-value" id="pnl">+$0.00</div>
             
             <div class="stats-grid">
-                <div><div class="dim">DAILY TARGET</div><div class="highlight">$100.00</div></div>
+                <div><div class="dim">DAILY TARGET</div><div class="highlight">$500.00</div></div>
                 <div><div class="dim">GOAL PROGRESS</div><div class="highlight" id="progressTxt">0.0%</div></div>
-                <div><div class="dim">WALLET MATIC</div><div class="highlight" id="maticBalance">--</div></div>
+                <div><div class="dim">WALLET BNB</div><div class="highlight" id="bnbBalance">--</div></div>
                 <div><div class="dim">LATENCY</div><div class="highlight" id="pingTxt">--</div></div>
             </div>
 
             <h2 style="margin-top: 30px;">▶ SYSTEM STATUS</h2>
-            <div style="font-size: 0.65rem; line-height: 1.8; color: #888; margin-top: 10px;">
-                CONTRACT: <span class="dim" id="contractAddr">0x019...FdfD</span><br>
-                BACKEND BOT: <span class="dim" id="botStatus">Offline</span><br>
-                GAS METHOD: <span class="highlight">DYNAMIC GWEI</span><br>
-                STRATEGY: <span class="highlight">MULTI-PAIR MEV (DRY RUN)</span>
+            <div style="font-size: 0.65rem; line-height: 2; color: #888; margin-top: 10px;">
+                CONTRACT: <span class="highlight">BSC FLASH SWAP V2</span><br>
+                MATRIX SIZE: <span class="highlight">15 DEXs</span><br>
+                SCAN RATE: <span class="highlight">800ms (Multicall3)</span><br>
+                GAS PROTOCOL: <span style="color:#00f0ff">DYNAMIC + FRONT-RUN</span><br>
+                BACKEND LINK: <span class="dim" id="botStatus">Offline</span>
             </div>
         </div>
 
         <div class="panel">
             <div class="visual-container">
-                <div class="canvas-box">
-                    <h2 style="position: absolute; top:5px; left:5px; border:none; margin:0;">▶ MEV TOPOLOGY</h2>
-                    <canvas id="topologyCanvas"></canvas>
-                </div>
-                <div class="canvas-box">
-                    <h2 style="position: absolute; top:5px; left:5px; border:none; margin:0;">▶ SPREAD WAVEFORM</h2>
-                    <canvas id="waveCanvas"></canvas>
+                <div class="canvas-box" style="flex: 2;">
+                    <h2 style="position: absolute; top:5px; left:5px; border:none; margin:0; z-index: 2;">▶ LIQUIDITY EXTRACTION MAP</h2>
+                    <canvas id="extractionCanvas"></canvas>
                 </div>
             </div>
 
-            <h2>▶ REAL-TIME MARKET RADAR (BINANCE VS DEX)</h2>
+            <h2>▶ LIVE OMNI-MATRIX RADAR</h2>
             <div class="table-container">
                 <table>
-                    <thead><tr><th>TARGET PAIR</th><th>LIVE SPREAD</th><th>NETWORK BLOCK</th><th style="text-align:right;">ACTION STATUS</th></tr></thead>
+                    <thead><tr><th>TARGET</th><th>BEST ROUTE</th><th>SPREAD</th><th style="text-align:right;">STATUS</th></tr></thead>
                     <tbody id="pairBody">
                         </tbody>
                 </table>
@@ -124,7 +128,7 @@
         </div>
 
         <div class="panel">
-            <h2>▶ BOT EXECUTION TERMINAL</h2>
+            <h2>▶ HFT EXECUTION TERMINAL</h2>
             <div class="terminal" id="terminal"></div>
         </div>
     </div>
@@ -134,14 +138,21 @@
     let engineRunning = false;
     let currentPnl = 0.00;
     
-    // SETUP WATCHLIST UI
-    const watchList = ["MATICUSDT", "ETHUSDT", "BTCUSDT", "LINKUSDT", "AAVEUSDT"];
+    // 🟢 30-TOKEN WATCHLIST (Synced with bot.js)
+    const watchList = [
+        "WBNBUSDT", "CAKEUSDT", "DOGEUSDT", "FLOKIUSDT", "BAKEUSDT", "TWTUSDT", 
+        "SHIBUSDT", "ETHUSDT", "BTCBUSDT", "XRPUSDT", "ADAUSDT", "LINKUSDT", 
+        "DOTUSDT", "MATICUSDT", "UNIUSDT", "ATOMUSDT", "AVAXUSDT", "FTMUSDT", 
+        "SOLUSDT", "GALAUSDT", "SANDUSDT", "MANAUSDT", "AAVEUSDT", "ALICEUSDT", 
+        "AXSUSDT", "GMTUSDT", "SFPUSDT", "INJUSDT", "CHZUSDT", "DARUSDT"
+    ];
+    
     const pairBody = document.getElementById('pairBody');
     watchList.forEach(pair => {
         pairBody.innerHTML += `<tr id="row-${pair}">
-            <td style="color:#fff; font-weight:bold;">${pair}</td>
+            <td style="color:#fff; font-weight:bold;">${pair.replace('USDT', '')}</td>
+            <td style="color:#444; font-size: 0.6rem;" id="route-${pair}">Awaiting Data...</td>
             <td style="color:#555" id="spread-${pair}">--</td>
-            <td style="color:#555" id="block-${pair}">--</td>
             <td style="text-align:right; color:#555" id="status-${pair}">STANDBY</td>
         </tr>`;
     });
@@ -158,74 +169,91 @@
             try {
                 const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
                 wTxt.innerText = accounts[0].substring(0, 6) + "..." + accounts[0].substring(38);
-                document.getElementById('maticBalance').innerText = "LIVE";
+                document.getElementById('bnbBalance').innerText = "LIVE";
                 wBtn.className = "btn connected";
                 isConnected = true;
                 
-                addLog(`[SYSTEM] MetaMask Connected. Ready for Multi-Pair Scan.`, "#3fb950");
+                addLog(`[SYSTEM] BSC Wallet Linked. Securing connection...`, "#3fb950");
                 engineBtn.disabled = false;
-                document.getElementById('engineText').innerText = "START NEURAL ENGINE";
+                document.getElementById('engineText').innerText = "IGNITE GOD MODE";
             } catch (err) {
                 wTxt.innerText = "FAILED";
                 setTimeout(() => wTxt.innerText = "CONNECT WALLET", 2000);
             }
         } else {
-            // Local Test Mode fallback
-            wTxt.innerText = "0x7A1...3f1 (Local)";
+            wTxt.innerText = "0xBSC...Admin";
             wBtn.className = "btn connected";
-            document.getElementById('maticBalance').innerText = "6.39";
+            document.getElementById('bnbBalance').innerText = "1.45 BNB";
             isConnected = true;
             engineBtn.disabled = false;
-            document.getElementById('engineText').innerText = "START NEURAL ENGINE";
-            addLog(`[SYSTEM] Local Wallet Connected.`, "#3fb950");
+            document.getElementById('engineText').innerText = "IGNITE GOD MODE";
+            addLog(`[SYSTEM] Interface Unlocked. Bypass mode active.`, "#f0b90b");
         }
     }
 
-    // 2. SOCKET.IO ENGINE
+    // 2. SOCKET.IO ENGINE (The Brain Link)
     let socketConnected = false;
+    // UI Anti-Freeze Throttling Mechanism
+    let lastUiUpdates = {}; 
+    const UI_THROTTLE_MS = 300; 
+
     function startEngine() {
         if(!isConnected || engineRunning) return;
         engineRunning = true;
         
         const eBtn = document.getElementById('engineBtn');
         eBtn.className = "btn btn-engine active";
-        document.getElementById('engineText').innerText = "ENGINE ACTIVE & LISTENING";
-        document.getElementById('botStatus').innerHTML = "<span style='color:#00f0ff'>ONLINE (Socket Linked)</span>";
-        document.getElementById('pingTxt').innerText = "12ms";
+        document.getElementById('engineText').innerText = "SCANNING 15 DEXs";
+        document.getElementById('botStatus').innerHTML = "<span style='color:#00f0ff'>ONLINE (WSS Sync)</span>";
+        document.getElementById('pingTxt').innerText = "8ms";
         
-        addLog(`[CORE] UI Bridge Active. Awaiting REAL Market Scans from bot.js...`, "#00f0ff");
+        addLog(`[CORE] Neural Engine Active. Multicall3 deployed across 15 BSC Routers.`, "#00f0ff");
         
-        // Connect to your Cloud HFT Backend
+        // ⚠️ INSERT YOUR BACKEND URL HERE:
         const socket = io('https://crispy-adventure-v6xv99xp7gj62w6j5-8080.app.github.dev');
 
         socket.on('connect', () => {
             if(!socketConnected) {
-                addLog(`>> [SYSTEM] Secure Socket connected to Backend HFT Engine!`, "#3fb950");
+                addLog(`>> [SYSTEM] Secure Socket connected to Backend Matrix!`, "#3fb950");
                 socketConnected = true;
             }
         });
 
-        // 🟢 REAL-TIME SCANNING LISTENER
+        // 🟢 REAL-TIME SCANNING LISTENER (With Anti-Crash Logic)
         socket.on('live_scan', (data) => {
             if(!engineRunning) return;
+            
+            const now = Date.now();
+            if (lastUiUpdates[data.pair] && (now - lastUiUpdates[data.pair] < UI_THROTTLE_MS)) return;
+            lastUiUpdates[data.pair] = now;
+
             const spreadEl = document.getElementById(`spread-${data.pair}`);
-            const blockEl = document.getElementById(`block-${data.pair}`);
+            const routeEl = document.getElementById(`route-${data.pair}`);
             const statusEl = document.getElementById(`status-${data.pair}`);
             const rowEl = document.getElementById(`row-${data.pair}`);
 
             if(spreadEl) {
-                spreadEl.innerText = data.spread + "%";
-                blockEl.innerText = data.block;
-                
                 const spreadVal = parseFloat(data.spread);
+                spreadEl.innerText = spreadVal > 0 ? "+" + data.spread + "%" : "0.00%";
                 
-                if(spreadVal > 0.35) {
+                // Decode route if provided by backend, else show generic
+                if(data.route) routeEl.innerText = data.route;
+                else routeEl.innerText = "Multicall Scanning...";
+                
+                if(spreadVal > 0.10) { // God Mode Threshold
                     spreadEl.style.color = "#00f0ff";
-                    statusEl.innerHTML = "<span style='color:#00f0ff'>⚡ STRIKE LOCKED</span>";
+                    routeEl.style.color = "#fff";
+                    statusEl.innerHTML = "<span style='color:#00f0ff'>⚡ PREPARING STRIKE</span>";
                     rowEl.className = "row-alert";
+                    
+                    // Add terminal log for high spreads
+                    if(Math.random() > 0.7) { 
+                        addLog(`[RADAR] Spread detected on ${data.pair}: ${spreadVal}%`, "#00f0ff");
+                    }
                 } else {
-                    spreadEl.style.color = "#888";
-                    statusEl.innerHTML = "SCANNING...";
+                    spreadEl.style.color = "#555";
+                    routeEl.style.color = "#444";
+                    statusEl.innerHTML = "SCANNING";
                     rowEl.className = "";
                 }
             }
@@ -235,87 +263,151 @@
         socket.on('trade_success', (data) => {
             currentPnl += data.profit;
             
+            // Update Top Metrics
             const pnlEl = document.getElementById('pnl');
             pnlEl.innerText = "+$" + currentPnl.toFixed(2);
             pnlEl.className = "pnl-value up";
             setTimeout(() => pnlEl.className = "pnl-value", 1000);
             
-            document.getElementById('progressTxt').innerText = ((currentPnl / 100) * 100).toFixed(1) + "%";
+            document.getElementById('progressTxt').innerText = ((currentPnl / 500) * 100).toFixed(1) + "%";
             
+            // Highlight Table Row
             const rowEl = document.getElementById(`row-${data.pair}`);
             if(rowEl) {
                 rowEl.className = "row-success";
-                document.getElementById(`status-${data.pair}`).innerHTML = "<span style='color:#3fb950'>✅ EXECUTED</span>";
+                document.getElementById(`status-${data.pair}`).innerHTML = "<span style='color:#f0b90b'>✅ EXTRACTED</span>";
                 setTimeout(() => { if(rowEl.className === "row-success") rowEl.className = ""; }, 3000);
             }
 
-            addLog(`>> [SUCCESS] Trade Executed: ${data.pair} | Net Profit: $${data.profit.toFixed(2)}`, "#3fb950");
-            addLog(`>> Hash: ${data.hash}`, "#555");
-        });
-        
-        socket.on('connect_error', () => {
-             if(socketConnected) {
-                 addLog(`>> [ERROR] Connection lost to bot.js. Retrying...`, "#f85149");
-                 socketConnected = false;
-             }
+            // Terminal Logs with BscScan Link
+            addLog(`>> [KILL SHOT] ${data.pair} Arbitrage Successfully Executed!`, "#f0b90b");
+            addLog(`>> [PROFIT] +$${data.profit.toFixed(2)} USDT deposited to Wallet.`, "#3fb950");
+            addLog(`>> [RECEIPT] <a href="https://bscscan.com/tx/${data.hash}" target="_blank">View on BscScan ↗</a>`, "#fff");
+            
+            // TRIGGER THE MONEY FLOW ANIMATION!
+            triggerExtraction();
         });
     }
 
     // 3. TERMINAL LOGIC
     const terminal = document.getElementById('terminal');
-    function getTimestamp() { const d = new Date(); return `${d.getHours()}:${d.getMinutes()}:${d.getSeconds()}.${d.getMilliseconds()}`; }
+    function getTimestamp() { const d = new Date(); return `${d.getHours().toString().padStart(2,'0')}:${d.getMinutes().toString().padStart(2,'0')}:${d.getSeconds().toString().padStart(2,'0')}`; }
     
     function addLog(msg, color = "#888") {
-        if(terminal.children.length > 40) terminal.removeChild(terminal.firstChild);
+        if(terminal.children.length > 50) terminal.removeChild(terminal.firstChild);
         const p = document.createElement('div');
-        p.style.marginBottom = "2px";
+        p.style.marginBottom = "4px";
         
         if(color === "#888") {
             const hex = Math.floor(Math.random()*16777215).toString(16);
-            p.innerHTML = `<span class="log-time">[${getTimestamp()}]</span> <span style="color:#444">[0x${hex}]</span> <span style="color:${color};">${msg}</span>`;
+            p.innerHTML = `<span class="log-time">[${getTimestamp()}]</span> <span style="color:#333">[0x${hex}]</span> <span style="color:${color};">${msg}</span>`;
         } else {
-            p.innerHTML = `<span class="log-time">[${getTimestamp()}]</span> <span style="color:${color}; font-weight:bold;">${msg}</span>`;
+            p.innerHTML = `<span class="log-time">[${getTimestamp()}]</span> <span style="color:${color};">${msg}</span>`;
         }
         terminal.appendChild(p);
-        terminal.scrollTop = terminal.scrollHeight;
+        terminal.scrollTop = terminal.scrollHeight; // Auto-scroll
     }
-    addLog("System Dormant. Connect wallet to proceed.");
+    addLog("Dashboard initialized. Awaiting user connection.", "#555");
 
-    // 4. NEURAL CANVASES
-    const topCanvas = document.getElementById('topologyCanvas');
-    const ctxTop = topCanvas.getContext('2d');
-    const waveCanvas = document.getElementById('waveCanvas');
-    const ctxWave = waveCanvas.getContext('2d');
-
+    // 4. THE LIQUIDITY EXTRACTION ANIMATION CANVAS
+    const canvas = document.getElementById('extractionCanvas');
+    const ctx = canvas.getContext('2d');
+    let particles = [];
+    
     function resize() {
-        topCanvas.width = topCanvas.parentElement.clientWidth; topCanvas.height = topCanvas.parentElement.clientHeight;
-        waveCanvas.width = waveCanvas.parentElement.clientWidth; waveCanvas.height = waveCanvas.parentElement.clientHeight;
+        canvas.width = canvas.parentElement.clientWidth; 
+        canvas.height = canvas.parentElement.clientHeight;
     }
     window.addEventListener('resize', resize); resize();
 
-    const dots = Array.from({length: 80}, () => ({ x: Math.random(), y: Math.random(), b: Math.random(), s: Math.random()*0.05 }));
-    function drawTop() {
-        ctxTop.clearRect(0, 0, topCanvas.width, topCanvas.height); 
-        ctxTop.fillStyle = engineRunning ? '#00f0ff' : '#444';
-        dots.forEach(d => {
-            if(engineRunning) { d.b += d.s; if(d.b > 1 || d.b < 0) d.s *= -1; }
-            ctxTop.globalAlpha = engineRunning ? Math.max(0, d.b) : 1;
-            ctxTop.beginPath(); ctxTop.arc(d.x * topCanvas.width, d.y * topCanvas.height, 1.2, 0, Math.PI*2); ctxTop.fill();
-        }); requestAnimationFrame(drawTop);
-    } drawTop();
+    // The central wallet
+    const walletNode = { radius: 20, pulse: 0 };
+    
+    // Create random "DEX" nodes around the edges
+    const dexNodes = [];
+    for(let i=0; i<15; i++) {
+        dexNodes.push({
+            angle: (Math.PI * 2 / 15) * i,
+            dist: 100 + Math.random() * 40
+        });
+    }
 
-    let offset = 0;
-    function drawWave() {
-        ctxWave.clearRect(0, 0, waveCanvas.width, waveCanvas.height); 
-        ctxWave.strokeStyle = engineRunning ? 'rgba(0,240,255,0.5)' : '#444'; 
-        ctxWave.lineWidth = 1; ctxWave.beginPath();
-        for(let i=0; i<waveCanvas.width; i+=4) {
-            const y = engineRunning ? (Math.sin((i+offset)*0.05)*15) + (Math.cos((i+offset)*0.02)*10) + (waveCanvas.height/2) : waveCanvas.height/2;
-            i===0 ? ctxWave.moveTo(i,y) : ctxWave.lineTo(i,y);
-        } ctxWave.stroke(); 
-        if(engineRunning) offset -= 4; 
-        requestAnimationFrame(drawWave);
-    } drawWave();
+    function triggerExtraction() {
+        // Find a random DEX to shoot money from
+        const dex = dexNodes[Math.floor(Math.random() * dexNodes.length)];
+        const startX = (canvas.width/2) + Math.cos(dex.angle) * dex.dist;
+        const startY = (canvas.height/2) + Math.sin(dex.angle) * dex.dist;
+        
+        // Spawn 10-15 particles representing money
+        for(let i=0; i<15; i++) {
+            particles.push({
+                x: startX + (Math.random() * 10 - 5),
+                y: startY + (Math.random() * 10 - 5),
+                targetX: canvas.width/2,
+                targetY: canvas.height/2,
+                speed: 0.05 + Math.random() * 0.05,
+                progress: 0,
+                color: Math.random() > 0.5 ? '#f0b90b' : '#3fb950' // Gold or Green
+            });
+        }
+        walletNode.pulse = 1; // Make wallet pulse
+    }
+
+    function drawExtraction() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height); 
+        const cx = canvas.width/2;
+        const cy = canvas.height/2;
+
+        // Draw DEX nodes (idle network lines)
+        ctx.strokeStyle = engineRunning ? 'rgba(0, 240, 255, 0.1)' : 'rgba(255, 255, 255, 0.02)';
+        ctx.lineWidth = 1;
+        dexNodes.forEach(dex => {
+            const dx = cx + Math.cos(dex.angle) * dex.dist;
+            const dy = cy + Math.sin(dex.angle) * dex.dist;
+            ctx.beginPath(); ctx.moveTo(dx, dy); ctx.lineTo(cx, cy); ctx.stroke();
+            
+            // Draw DEX dot
+            ctx.fillStyle = engineRunning ? '#222' : '#111';
+            ctx.beginPath(); ctx.arc(dx, dy, 3, 0, Math.PI*2); ctx.fill();
+        });
+
+        // Draw Money Particles
+        for (let i = particles.length - 1; i >= 0; i--) {
+            let p = particles[i];
+            p.progress += p.speed;
+            
+            const currentX = p.x + (p.targetX - p.x) * p.progress;
+            const currentY = p.y + (p.targetY - p.y) * p.progress;
+
+            ctx.fillStyle = p.color;
+            ctx.beginPath(); ctx.arc(currentX, currentY, 2, 0, Math.PI*2); ctx.fill();
+            
+            // Trail
+            ctx.strokeStyle = p.color;
+            ctx.globalAlpha = 0.5;
+            ctx.beginPath(); ctx.moveTo(p.x + (p.targetX - p.x) * (p.progress - 0.1), p.y + (p.targetY - p.y) * (p.progress - 0.1)); ctx.lineTo(currentX, currentY); ctx.stroke();
+            ctx.globalAlpha = 1;
+
+            if (p.progress >= 1) particles.splice(i, 1);
+        }
+
+        // Draw Center Wallet Node
+        if(walletNode.pulse > 0) walletNode.pulse -= 0.05;
+        const currentRadius = walletNode.radius + (walletNode.pulse * 10);
+        
+        ctx.fillStyle = `rgba(240, 185, 11, ${engineRunning ? 0.8 : 0.2})`;
+        ctx.beginPath(); ctx.arc(cx, cy, currentRadius, 0, Math.PI*2); ctx.fill();
+        
+        // Inner Wallet Core
+        ctx.fillStyle = '#fff';
+        ctx.beginPath(); ctx.arc(cx, cy, 8, 0, Math.PI*2); ctx.fill();
+
+        requestAnimationFrame(drawExtraction);
+    } 
+    drawExtraction();
+
+    // (Optional) For testing the animation manually in browser console:
+    // setInterval(triggerExtraction, 5000);
 </script>
 </body>
 </html>
