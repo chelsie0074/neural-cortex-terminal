@@ -211,7 +211,7 @@
         addLog(`Initiating neural link to bot.js...`, "#00ffff");
         
         // 🔴🔴🔴 YOUR BACKEND URL GOES HERE 🔴🔴🔴
-        const socket = io('http://localhost:8080'); // Change this to your Vercel/VPS URL if needed
+        const socket = io('https://crispy-adventure-v6xv99xp7gj62w6j5-8080.app.github.dev/'); // Change this to your Vercel/VPS URL if needed
 
         socket.on('connect', () => {
             addLog(`WebSocket Connected! Streaming live on-chain data.`, "#00ff00");
