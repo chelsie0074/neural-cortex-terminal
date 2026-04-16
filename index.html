@@ -27,14 +27,12 @@
             position: relative;
         }
 
-        /* CRT Scanline Effect */
         body::before {
             content: " "; display: block; position: absolute; top: 0; left: 0; bottom: 0; right: 0;
             background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
             z-index: 100; background-size: 100% 2px, 3px 100%; pointer-events: none; opacity: 0.8;
         }
 
-        /* HEADER */
         header { display: flex; justify-content: space-between; align-items: center; padding: 10px 20px; border-bottom: 1px solid #00ff00; background: #020202; }
         .logo { font-size: 1.5rem; font-weight: bold; color: #00ff00; text-shadow: 0 0 10px #00ff00; }
         .controls { display: flex; gap: 15px; }
@@ -42,23 +40,18 @@
         .btn { background: #000; border: 1px solid #00ff00; color: #00ff00; padding: 8px 20px; font-family: inherit; font-size: 0.9rem; cursor: pointer; text-transform: uppercase; transition: 0.2s; box-shadow: 0 0 5px rgba(0,255,0,0.2);}
         .btn:hover { background: #00ff00; color: #000; box-shadow: 0 0 15px #00ff00; }
         .btn:disabled { border-color: #333; color: #333; box-shadow: none; cursor: not-allowed;}
-        
         .btn-engine.active { border-color: #00ffff; color: #00ffff; box-shadow: 0 0 15px #00ffff; }
         .btn-engine.active:hover { background: #00ffff; color: #000; }
 
-        /* LAYOUT */
         .container { display: grid; grid-template-columns: 300px 1fr 450px; gap: 20px; padding: 20px; height: calc(100vh - 60px); }
         h2 { font-size: 0.9rem; color: #00ffff; text-transform: uppercase; margin-bottom: 15px; border-bottom: 1px solid #00ffff; padding-bottom: 5px; text-shadow: 0 0 5px #00ffff; }
         
-        /* PANELS */
         .panel { border: 1px solid #00ff00; padding: 15px; background: rgba(0, 20, 0, 0.4); display: flex; flex-direction: column; overflow: hidden; box-shadow: inset 0 0 10px rgba(0,255,0,0.1);}
         
-        /* METRICS */
         .pnl-value { font-size: 3.5rem; color: #00ff00; text-shadow: 0 0 20px #00ff00; margin: 10px 0; }
         .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; font-size: 0.85rem; margin-top: 15px; }
         .stats-grid div span { color: #00ffff; display: block; font-size: 1.2rem; margin-top: 5px; text-shadow: 0 0 5px #00ffff;}
 
-        /* MARKET WATCH TABLE */
         .table-container { flex: 1; overflow-y: auto; border: 1px solid #00ff00; padding: 10px; background: #000; }
         table { width: 100%; font-size: 0.8rem; border-collapse: collapse; }
         th { text-align: left; padding: 8px 5px; color: #00ffff; border-bottom: 1px dashed #00ff00; position: sticky; top: 0; background: #000; }
@@ -67,13 +60,11 @@
         .row-success td { background: rgba(0, 255, 0, 0.2); color: #00ff00 !important; font-weight: bold; text-shadow: 0 0 10px #00ff00; }
         .dim { color: #555; }
 
-        /* TERMINAL */
         .terminal-container { flex: 1; display: flex; flex-direction: column; border: 1px solid #00ff00; background: #000; position: relative;}
         .terminal-header { background: #00ff00; color: #000; padding: 5px 10px; font-weight: bold; font-size: 0.8rem; display: flex; justify-content: space-between;}
         .terminal { flex: 1; overflow-y: auto; padding: 10px; font-size: 0.75rem; line-height: 1.5; }
         .log-time { color: #00ffff; margin-right: 10px; }
         
-        /* CANVAS */
         .canvas-container { height: 200px; border: 1px solid #00ff00; margin-bottom: 20px; background: #000; position: relative; overflow: hidden; }
         canvas { width: 100%; height: 100%; display: block; }
         .overlay-text { position: absolute; top: 5px; left: 10px; color: #00ffff; font-size: 0.7rem; text-shadow: 0 0 5px #00ffff;}
@@ -160,7 +151,6 @@
         </tr>`;
     });
 
-    // 1. WALLET CONNECTION
     async function connectWallet() {
         const wBtn = document.getElementById('walletBtn');
         const eBtn = document.getElementById('engineBtn');
@@ -190,10 +180,10 @@
         }
     }
 
-    // 2. SOCKET ENGINE (THE BRIDGE)
     let lastUiUpdates = {}; 
     const UI_THROTTLE_MS = 250; 
 
+    // 🟢 UPDATED START ENGINE FUNCTION
     function startEngine() {
         if(!isConnected || engineRunning) return;
         engineRunning = true;
@@ -210,11 +200,33 @@
         
         addLog(`Initiating neural link to bot.js...`, "#00ffff");
         
-        // 🔴🔴🔴 YOUR BACKEND URL GOES HERE 🔴🔴🔴
-        const socket = io('https://crispy-adventure-v6xv99xp7gj62w6j5-8080.app.github.dev/'); // Change this to your Vercel/VPS URL if needed
+        const socket = io('https://crispy-adventure-v6xv99xp7gj62w6j5-8080.app.github.dev'); 
 
         socket.on('connect', () => {
             addLog(`WebSocket Connected! Streaming live on-chain data.`, "#00ff00");
+        });
+
+        // 🚨 AUTO-KILL SWITCHES (DISCONNECT HANDLING)
+        socket.on('disconnect', () => {
+            engineRunning = false;
+            botStatus.innerText = "OFFLINE";
+            botStatus.style.color = "#ff0000";
+            botStatus.style.textShadow = "0 0 10px #ff0000";
+            eBtn.className = "btn btn-engine";
+            eBtn.innerText = "[ CONNECTION_LOST ]";
+            document.getElementById('pingTxt').innerText = "-- ms";
+            addLog(`[ERROR] Target Node Offline. Connection severed.`, "#ff0000");
+        });
+
+        socket.on('connect_error', () => {
+            if(engineRunning) {
+                engineRunning = false;
+                botStatus.innerText = "ERROR";
+                botStatus.style.color = "#ff0000";
+                eBtn.className = "btn btn-engine";
+                eBtn.innerText = "[ RETRYING_LINK ]";
+                addLog(`[WARNING] Failed to reach Execution Node. Retrying...`, "#ffaa00");
+            }
         });
 
         // LIVE SCAN LISTENER
@@ -338,10 +350,10 @@
             ctx.beginPath(); ctx.moveTo(dx, dy); ctx.lineTo(cx, cy); ctx.stroke();
             
             ctx.fillStyle = engineRunning ? '#00ffff' : '#111';
-            ctx.fillRect(dx-2, dy-2, 4, 4); // Square nodes for hacker feel
+            ctx.fillRect(dx-2, dy-2, 4, 4); 
         });
 
-        // Draw Data Packets (Particles)
+        // Draw Data Packets
         ctx.fillStyle = '#00ff00';
         for (let i = particles.length - 1; i >= 0; i--) {
             let p = particles[i];
