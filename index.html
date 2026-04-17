@@ -3,124 +3,173 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OpenClaw AI | Dark Forest MEV Terminal</title>
+    <title>OpenClaw AI | Institutional MEV Terminal</title>
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
     <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script> 
     
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@300;400;600&family=Inter:wght@400;600;800&display=swap');
         
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        ::-webkit-scrollbar { width: 5px; }
-        ::-webkit-scrollbar-track { background: #000; }
-        ::-webkit-scrollbar-thumb { background: #00ff00; }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #3b82f6; border-radius: 10px; }
 
         body { 
-            background-color: #000000; 
-            color: #00ff00; 
-            font-family: 'Share Tech Mono', monospace; 
+            background-color: #050b14; 
+            color: #e2e8f0; 
+            font-family: 'Inter', sans-serif; 
             overflow: hidden; 
             height: 100vh; 
             display: flex; 
             flex-direction: column; 
-            position: relative;
+            background-image: 
+                radial-gradient(circle at 15% 50%, rgba(14, 165, 233, 0.08), transparent 25%),
+                radial-gradient(circle at 85% 30%, rgba(16, 185, 129, 0.05), transparent 25%);
         }
 
-        body::before {
-            content: " "; display: block; position: absolute; top: 0; left: 0; bottom: 0; right: 0;
-            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
-            z-index: 100; background-size: 100% 2px, 3px 100%; pointer-events: none; opacity: 0.8;
+        /* HEADER */
+        header { 
+            display: flex; justify-content: space-between; align-items: center; 
+            padding: 15px 30px; 
+            background: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
+            z-index: 10;
         }
-
-        header { display: flex; justify-content: space-between; align-items: center; padding: 10px 20px; border-bottom: 1px solid #00ff00; background: #020202; }
-        .logo { font-size: 1.5rem; font-weight: bold; color: #00ff00; text-shadow: 0 0 10px #00ff00; }
+        .logo { font-size: 1.2rem; font-weight: 800; color: #f8fafc; letter-spacing: 1px; display: flex; align-items: center; gap: 10px;}
+        .logo span { color: #3b82f6; font-family: 'Fira Code', monospace; font-size: 0.9rem; font-weight: 400; background: rgba(59, 130, 246, 0.1); padding: 4px 8px; border-radius: 4px;}
+        
         .controls { display: flex; gap: 15px; }
-        
-        .btn { background: #000; border: 1px solid #00ff00; color: #00ff00; padding: 8px 20px; font-family: inherit; font-size: 0.9rem; cursor: pointer; text-transform: uppercase; transition: 0.2s; box-shadow: 0 0 5px rgba(0,255,0,0.2);}
-        .btn:hover { background: #00ff00; color: #000; box-shadow: 0 0 15px #00ff00; }
-        .btn:disabled { border-color: #333; color: #333; box-shadow: none; cursor: not-allowed;}
-        .btn-engine.active { border-color: #00ffff; color: #00ffff; box-shadow: 0 0 15px #00ffff; }
-        .btn-engine.active:hover { background: #00ffff; color: #000; }
+        .btn { 
+            background: rgba(30, 41, 59, 0.8); border: 1px solid rgba(255,255,255,0.1); 
+            color: #cbd5e1; padding: 8px 24px; font-family: 'Fira Code', monospace; 
+            font-size: 0.85rem; cursor: pointer; border-radius: 6px; transition: all 0.3s ease; 
+        }
+        .btn:hover { background: rgba(59, 130, 246, 0.15); border-color: #3b82f6; color: #fff; }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .btn-engine.active { background: rgba(16, 185, 129, 0.1); border-color: #10b981; color: #10b981; box-shadow: 0 0 15px rgba(16, 185, 129, 0.2); }
+        .btn-engine.active:hover { background: #10b981; color: #000; }
 
-        .container { display: grid; grid-template-columns: 300px 1fr 450px; gap: 20px; padding: 20px; height: calc(100vh - 60px); }
-        h2 { font-size: 0.9rem; color: #00ffff; text-transform: uppercase; margin-bottom: 15px; border-bottom: 1px solid #00ffff; padding-bottom: 5px; text-shadow: 0 0 5px #00ffff; }
+        /* LAYOUT */
+        .container { 
+            display: grid; grid-template-columns: 320px 1fr 400px; gap: 20px; 
+            padding: 20px; height: calc(100vh - 65px); 
+        }
         
-        .panel { border: 1px solid #00ff00; padding: 15px; background: rgba(0, 20, 0, 0.4); display: flex; flex-direction: column; overflow: hidden; box-shadow: inset 0 0 10px rgba(0,255,0,0.1);}
+        /* GLASS PANELS */
+        .panel { 
+            background: rgba(15, 23, 42, 0.4);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 20px; 
+            display: flex; flex-direction: column; overflow: hidden; 
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        }
         
-        .pnl-value { font-size: 3.5rem; color: #00ff00; text-shadow: 0 0 20px #00ff00; margin: 10px 0; }
-        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; font-size: 0.85rem; margin-top: 15px; }
-        .stats-grid div span { color: #00ffff; display: block; font-size: 1.2rem; margin-top: 5px; text-shadow: 0 0 5px #00ffff;}
+        h2 { font-size: 0.8rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 20px; font-weight: 600; display: flex; justify-content: space-between; }
+        
+        /* METRICS */
+        .pnl-box { background: rgba(0,0,0,0.2); padding: 20px; border-radius: 8px; border: 1px solid rgba(16, 185, 129, 0.1); text-align: center; margin-bottom: 20px;}
+        .pnl-value { font-size: 3rem; color: #10b981; font-family: 'Fira Code', monospace; font-weight: 600; text-shadow: 0 0 20px rgba(16,185,129,0.4); margin: 5px 0; }
+        
+        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; font-family: 'Fira Code', monospace; font-size: 0.75rem; color: #64748b;}
+        .stat-card { background: rgba(0,0,0,0.2); padding: 12px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.03); }
+        .stat-card span { display: block; color: #f8fafc; font-size: 1.1rem; margin-top: 5px; font-weight: 600;}
+        .status-online { color: #10b981 !important; text-shadow: 0 0 10px rgba(16,185,129,0.5); }
+        .status-offline { color: #ef4444 !important; }
 
-        .table-container { flex: 1; overflow-y: auto; border: 1px solid #00ff00; padding: 10px; background: #000; }
-        table { width: 100%; font-size: 0.8rem; border-collapse: collapse; }
-        th { text-align: left; padding: 8px 5px; color: #00ffff; border-bottom: 1px dashed #00ff00; position: sticky; top: 0; background: #000; }
-        td { padding: 8px 5px; border-bottom: 1px dotted #222; }
-        .row-alert td { background: rgba(0, 255, 255, 0.1); color: #00ffff !important; text-shadow: 0 0 5px #00ffff; }
-        .row-success td { background: rgba(0, 255, 0, 0.2); color: #00ff00 !important; font-weight: bold; text-shadow: 0 0 10px #00ff00; }
-        .dim { color: #555; }
-
-        .terminal-container { flex: 1; display: flex; flex-direction: column; border: 1px solid #00ff00; background: #000; position: relative;}
-        .terminal-header { background: #00ff00; color: #000; padding: 5px 10px; font-weight: bold; font-size: 0.8rem; display: flex; justify-content: space-between;}
-        .terminal { flex: 1; overflow-y: auto; padding: 10px; font-size: 0.75rem; line-height: 1.5; }
-        .log-time { color: #00ffff; margin-right: 10px; }
+        /* MARKET WATCH TABLE */
+        .table-container { flex: 1; overflow-y: auto; background: rgba(0,0,0,0.15); border-radius: 8px; border: 1px solid rgba(255,255,255,0.03); }
+        table { width: 100%; font-size: 0.8rem; border-collapse: collapse; font-family: 'Fira Code', monospace; }
+        th { text-align: left; padding: 12px 15px; color: #94a3b8; font-weight: 600; position: sticky; top: 0; background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(5px); font-family: 'Inter', sans-serif; font-size: 0.7rem; letter-spacing: 1px;}
+        td { padding: 10px 15px; border-bottom: 1px solid rgba(255,255,255,0.02); color: #cbd5e1; }
         
-        .canvas-container { height: 200px; border: 1px solid #00ff00; margin-bottom: 20px; background: #000; position: relative; overflow: hidden; }
+        /* DATA COLORS */
+        .text-green { color: #10b981; font-weight: 600; }
+        .text-orange { color: #f59e0b; }
+        .text-gray { color: #475569; }
+        .text-cyan { color: #0ea5e9; }
+        .row-strike { background: rgba(16, 185, 129, 0.1); border-left: 3px solid #10b981; }
+
+        /* TERMINAL */
+        .terminal-container { flex: 1; display: flex; flex-direction: column; background: #020617; border-radius: 8px; border: 1px solid rgba(255,255,255,0.05); overflow: hidden;}
+        .terminal-header { background: #0f172a; color: #64748b; padding: 8px 15px; font-size: 0.7rem; font-family: 'Fira Code', monospace; display: flex; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.05);}
+        .terminal { flex: 1; overflow-y: auto; padding: 15px; font-size: 0.75rem; line-height: 1.6; font-family: 'Fira Code', monospace; color: #94a3b8; }
+        .log-time { color: #3b82f6; margin-right: 8px; opacity: 0.7; }
+
+        /* CANVAS */
+        .canvas-container { height: 180px; background: #020617; border-radius: 8px; border: 1px solid rgba(255,255,255,0.05); margin-bottom: 20px; position: relative; overflow: hidden; }
         canvas { width: 100%; height: 100%; display: block; }
-        .overlay-text { position: absolute; top: 5px; left: 10px; color: #00ffff; font-size: 0.7rem; text-shadow: 0 0 5px #00ffff;}
+        .overlay-badge { position: absolute; top: 10px; left: 10px; background: rgba(59, 130, 246, 0.2); color: #3b82f6; padding: 3px 8px; border-radius: 4px; font-size: 0.65rem; font-family: 'Fira Code'; font-weight: 600; border: 1px solid rgba(59, 130, 246, 0.3);}
     </style>
 </head>
 <body>
 
     <header>
-        <div class="logo">ROOT@OPENCLAW:~# BSC_MEV_NODE</div>
+        <div class="logo">OPENCLAW <span>OMNI-ANALYZER V14</span></div>
         <div class="controls">
-            <button class="btn btn-engine" id="engineBtn" onclick="startEngine()" disabled>[ INIT_ENGINE ]</button>
-            <button class="btn" id="walletBtn" onclick="connectWallet()">[ AUTH_WALLET ]</button>
+            <button class="btn btn-engine" id="engineBtn" onclick="startEngine()" disabled>[ SYSTEM_STANDBY ]</button>
+            <button class="btn" id="walletBtn" onclick="connectWallet()">CONNECT_NODE</button>
         </div>
     </header>
 
     <div class="container">
         <div class="panel">
-            <h2>>_ SESSION_METRICS</h2>
-            <div style="color: #555;">NET_EXTRACTED_USDT</div>
-            <div class="pnl-value" id="pnl">+$0.00</div>
+            <h2>Live Session Metrics <span>🔴 REC</span></h2>
+            
+            <div class="pnl-box">
+                <div style="color: #64748b; font-size: 0.75rem; font-weight: 600; letter-spacing: 1px;">TOTAL EXTRACTED YIELD</div>
+                <div class="pnl-value" id="pnl">+$0.00</div>
+                <div style="color: #10b981; font-size: 0.8rem; font-family: 'Fira Code';">~ 0.0000 WBNB</div>
+            </div>
             
             <div class="stats-grid">
-                <div>TARGET_USD <span id="targetTxt">$1000.00</span></div>
-                <div>NODE_PING <span id="pingTxt">-- ms</span></div>
-                <div>WALLET_BNB <span id="bnbBalance">--</span></div>
-                <div>STATUS <span id="botStatus" style="color:#f00; text-shadow: 0 0 5px #f00;">OFFLINE</span></div>
+                <div class="stat-card">BASE_ASSET <span class="text-cyan">WBNB</span></div>
+                <div class="stat-card">RPC_LATENCY <span id="pingTxt">-- ms</span></div>
+                <div class="stat-card">MEMPOOL_RPC <span class="text-green">SECURE</span></div>
+                <div class="stat-card">ENGINE_STATE <span id="botStatus" class="status-offline">OFFLINE</span></div>
             </div>
 
-            <div style="margin-top: auto; font-size: 0.7rem; color: #444; border-top: 1px dashed #333; padding-top: 10px;">
-                > MATRIX: 15_DEX_FORKS<br>
-                > SYNC: MULTICALL3_RPC<br>
-                > GAS_PROTOCOL: FRONT_RUN_GWEI<br>
-                > TUNNEL: BLOXROUTE_VIP
+            <div style="margin-top: auto; font-family: 'Fira Code'; font-size: 0.7rem; color: #475569; line-height: 1.8; background: rgba(0,0,0,0.2); padding: 15px; border-radius: 6px;">
+                > MATRIX: 11_NATIVE_POOLS<br>
+                > ROUTING: WBNB_BASE_PAIR<br>
+                > BYPASS: CHECKSUM_EIP55<br>
+                > THRESHOLD: > $0.01 NET
             </div>
         </div>
 
         <div class="panel">
             <div class="canvas-container">
-                <div class="overlay-text">LIVE LIQUIDITY EXTRACTION MAP</div>
+                <div class="overlay-badge">LIQUIDITY ROUTING VISUALIZER</div>
                 <canvas id="matrixCanvas"></canvas>
             </div>
 
-            <h2>>_ LIVE_OMNI_MATRIX_FEED</h2>
+            <h2>On-Chain Matrix Feed</h2>
             <div class="table-container">
                 <table>
-                    <thead><tr><th>ASSET</th><th>ROUTING_PATH</th><th>SPREAD</th><th style="text-align:right;">ACTION</th></tr></thead>
+                    <thead>
+                        <tr>
+                            <th>ASSET</th>
+                            <th>ROUTE PATH</th>
+                            <th>GROSS SPREAD</th>
+                            <th style="text-align:right;">ANALYZER REASON</th>
+                        </tr>
+                    </thead>
                     <tbody id="pairBody"></tbody>
                 </table>
             </div>
         </div>
 
-        <div class="panel" style="padding: 0; background: #000;">
+        <div class="panel" style="padding: 0; background: transparent; border: none; box-shadow: none;">
             <div class="terminal-container">
                 <div class="terminal-header">
-                    <span>root@execution-node:~</span>
-                    <span>bash - 80x24</span>
+                    <span>root@execution-node ~ tail -f /var/log/mev.log</span>
+                    <span style="color: #10b981;">● LIVE</span>
                 </div>
                 <div class="terminal" id="terminal"></div>
             </div>
@@ -131,23 +180,24 @@
     let isConnected = false;
     let engineRunning = false;
     let currentPnl = 0.00;
+    let currentBNB = 0.0000;
     
-    // BSC Watchlist
+    // V14 Base Symbols Watchlist
     const watchList = [
-        "WBNBUSDT", "CAKEUSDT", "DOGEUSDT", "FLOKIUSDT", "BAKEUSDT", "TWTUSDT", 
-        "SHIBUSDT", "ETHUSDT", "BTCBUSDT", "XRPUSDT", "ADAUSDT", "LINKUSDT", 
-        "DOTUSDT", "MATICUSDT", "UNIUSDT", "ATOMUSDT", "AVAXUSDT", "FTMUSDT", 
-        "SOLUSDT", "GALAUSDT", "SANDUSDT", "MANAUSDT", "AAVEUSDT", "ALICEUSDT", 
-        "AXSUSDT", "GMTUSDT", "SFPUSDT", "INJUSDT", "CHZUSDT", "DARUSDT"
+        "CAKE", "DOGE", "FLOKI", "BAKE", "TWT", 
+        "SHIB", "ETH", "BTCB", "XRP", "ADA", "LINK", 
+        "DOT", "MATIC", "UNI", "ATOM", "AVAX", "FTM", 
+        "SOL", "GALA", "SAND", "MANA", "AAVE", "ALICE", 
+        "AXS", "GMT", "SFP", "INJ", "CHZ", "DAR"
     ];
     
     const pairBody = document.getElementById('pairBody');
     watchList.forEach(pair => {
         pairBody.innerHTML += `<tr id="row-${pair}">
-            <td>${pair.replace('USDT', '')}</td>
-            <td class="dim" id="route-${pair}">AWAITING_DATA...</td>
-            <td class="dim" id="spread-${pair}">0.00%</td>
-            <td style="text-align:right;" class="dim" id="status-${pair}">STANDBY</td>
+            <td style="font-weight: 600; color: #f8fafc;">${pair}</td>
+            <td class="text-gray" id="route-${pair}">WAITING...</td>
+            <td class="text-gray" id="spread-${pair}">0.000%</td>
+            <td style="text-align:right;" class="text-gray" id="status-${pair}">STANDBY</td>
         </tr>`;
     });
 
@@ -155,81 +205,76 @@
         const wBtn = document.getElementById('walletBtn');
         const eBtn = document.getElementById('engineBtn');
         
-        wBtn.innerText = "[ AUTHENTICATING... ]";
+        wBtn.innerText = "AUTHENTICATING...";
 
         if (typeof window.ethereum !== 'undefined' && window.location.protocol !== 'file:') {
             try {
                 const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
-                wBtn.innerText = `[ ${accounts[0].substring(0, 6)}...${accounts[0].substring(38)} ]`;
-                wBtn.style.background = "#00ff00"; wBtn.style.color = "#000";
-                document.getElementById('bnbBalance').innerText = "LINKED";
+                wBtn.innerText = `${accounts[0].substring(0, 6)}...${accounts[0].substring(38)}`;
+                wBtn.style.background = "rgba(16, 185, 129, 0.1)"; wBtn.style.color = "#10b981"; wBtn.style.borderColor = "#10b981";
                 isConnected = true;
                 eBtn.disabled = false;
-                addLog(`Access Granted. BSC Wallet linked.`, "#00ff00");
+                addLog(`Wallet authenticated. Node access granted.`, "#10b981");
             } catch (err) {
-                wBtn.innerText = "[ AUTH_FAILED ]";
-                setTimeout(() => wBtn.innerText = "[ AUTH_WALLET ]", 2000);
+                wBtn.innerText = "AUTH FAILED";
+                setTimeout(() => wBtn.innerText = "CONNECT_NODE", 2000);
             }
         } else {
-            wBtn.innerText = "[ 0xROOT...ADMIN ]";
-            wBtn.style.background = "#00ff00"; wBtn.style.color = "#000";
-            document.getElementById('bnbBalance').innerText = "BYPASS";
+            wBtn.innerText = "0xROOT...ADMIN";
+            wBtn.style.background = "rgba(16, 185, 129, 0.1)"; wBtn.style.color = "#10b981"; wBtn.style.borderColor = "#10b981";
             isConnected = true;
             eBtn.disabled = false;
-            addLog(`Local bypass authorized. Engine ready.`, "#00ff00");
+            addLog(`Local bypass authorized. Systems primed.`, "#10b981");
         }
     }
 
     let lastUiUpdates = {}; 
-    const UI_THROTTLE_MS = 250; 
+    const UI_THROTTLE_MS = 200; 
 
-    // 🟢 UPDATED START ENGINE FUNCTION
     function startEngine() {
         if(!isConnected || engineRunning) return;
         engineRunning = true;
         
         const eBtn = document.getElementById('engineBtn');
         eBtn.className = "btn btn-engine active";
-        eBtn.innerText = "[ SCANNING_MATRIX ]";
+        eBtn.innerText = "[ SCANNING_POOLS ]";
         
         const botStatus = document.getElementById('botStatus');
         botStatus.innerText = "ONLINE";
-        botStatus.style.color = "#00ff00";
-        botStatus.style.textShadow = "0 0 10px #00ff00";
-        document.getElementById('pingTxt').innerText = "12ms";
+        botStatus.className = "status-online";
+        document.getElementById('pingTxt').innerText = "18ms";
         
-        addLog(`Initiating neural link to bot.js...`, "#00ffff");
+        addLog(`Initiating WBNB base-routing protocols...`, "#0ea5e9");
         
+        // 🔴🔴🔴 PUT YOUR GITHUB CODESPACES / VERCEL URL HERE 🔴🔴🔴
         const socket = io('https://crispy-adventure-v6xv99xp7gj62w6j5-8080.app.github.dev'); 
 
         socket.on('connect', () => {
-            addLog(`WebSocket Connected! Streaming live on-chain data.`, "#00ff00");
+            addLog(`Secure WebSocket established. Receiving Omni-Matrix data.`, "#10b981");
         });
 
-        // 🚨 AUTO-KILL SWITCHES (DISCONNECT HANDLING)
         socket.on('disconnect', () => {
             engineRunning = false;
             botStatus.innerText = "OFFLINE";
-            botStatus.style.color = "#ff0000";
-            botStatus.style.textShadow = "0 0 10px #ff0000";
+            botStatus.className = "status-offline";
             eBtn.className = "btn btn-engine";
             eBtn.innerText = "[ CONNECTION_LOST ]";
             document.getElementById('pingTxt').innerText = "-- ms";
-            addLog(`[ERROR] Target Node Offline. Connection severed.`, "#ff0000");
+            addLog(`[FATAL] Execution Node disconnected. Pipeline severed.`, "#ef4444");
         });
 
         socket.on('connect_error', () => {
             if(engineRunning) {
                 engineRunning = false;
                 botStatus.innerText = "ERROR";
-                botStatus.style.color = "#ff0000";
+                botStatus.className = "status-offline";
                 eBtn.className = "btn btn-engine";
                 eBtn.innerText = "[ RETRYING_LINK ]";
-                addLog(`[WARNING] Failed to reach Execution Node. Retrying...`, "#ffaa00");
+                addLog(`[WARN] RPC timeout or connection refused. Retrying...`, "#f59e0b");
             }
         });
 
-        // LIVE SCAN LISTENER
+        // 🟢 V14 OMNI-ANALYZER FEED LISTENER
         socket.on('live_scan', (data) => {
             if(!engineRunning) return;
             
@@ -244,24 +289,35 @@
 
             if(spreadEl) {
                 const spreadVal = parseFloat(data.spread);
-                spreadEl.innerText = spreadVal > 0 ? "+" + data.spread + "%" : "0.00%";
-                routeEl.innerText = data.route || "SYNCING...";
                 
-                if(spreadVal > 0.10) { 
-                    spreadEl.style.color = "#00ffff";
-                    routeEl.style.color = "#00ffff";
-                    statusEl.innerText = "LOCKING_TARGET";
-                    statusEl.style.color = "#00ffff";
-                    rowEl.className = "row-alert";
-                    
-                    if(Math.random() > 0.8) { 
-                        addLog(`Inefficiency detected: ${data.pair} [Spread: ${spreadVal}%]`, "#00ffff");
-                    }
+                // Color Logic for Values
+                if(spreadVal > 0) {
+                    spreadEl.innerText = "+" + spreadVal.toFixed(3) + "%";
+                    spreadEl.className = "text-green";
+                } else if (spreadVal < 0) {
+                    spreadEl.innerText = spreadVal.toFixed(3) + "%";
+                    spreadEl.className = "text-orange";
                 } else {
-                    spreadEl.style.color = "#555";
-                    routeEl.style.color = "#555";
-                    statusEl.innerText = "SCANNING";
-                    statusEl.style.color = "#555";
+                    spreadEl.innerText = "0.000%";
+                    spreadEl.className = "text-gray";
+                }
+                
+                routeEl.innerText = data.route || "SEARCHING...";
+                routeEl.className = data.route.includes("MATRIX") ? "text-gray" : "text-cyan";
+
+                // V14 REASON LOGIC
+                statusEl.innerText = data.reason;
+                if(data.reason === "STRIKING") {
+                    statusEl.className = "text-green";
+                    rowEl.className = "row-strike";
+                } else if (data.reason.includes("REJECTED")) {
+                    statusEl.className = "text-orange";
+                    rowEl.className = "";
+                } else if (data.reason.includes("LOW LIQUIDITY")) {
+                    statusEl.className = "text-gray";
+                    rowEl.className = "";
+                } else {
+                    statusEl.className = "text-gray";
                     rowEl.className = "";
                 }
             }
@@ -270,41 +326,42 @@
         // EXECUTION LISTENER
         socket.on('trade_success', (data) => {
             currentPnl += data.profit;
+            currentBNB += (data.profit / 600); // Rough estimate for UI
             document.getElementById('pnl').innerText = "+$" + currentPnl.toFixed(2);
+            document.getElementById('pnl').nextElementSibling.innerText = `~ ${currentBNB.toFixed(4)} WBNB`;
             
             const rowEl = document.getElementById(`row-${data.pair}`);
             if(rowEl) {
-                rowEl.className = "row-success";
-                document.getElementById(`status-${data.pair}`).innerText = "PROFIT_EXTRACTED";
-                setTimeout(() => { if(rowEl.className === "row-success") rowEl.className = ""; }, 3000);
+                document.getElementById(`status-${data.pair}`).innerText = "YIELD_EXTRACTED";
+                document.getElementById(`status-${data.pair}`).className = "text-green";
+                rowEl.style.background = "rgba(16, 185, 129, 0.2)";
+                setTimeout(() => { rowEl.style.background = "transparent"; }, 3000);
             }
 
-            addLog(`------------------------------------`, "#00ff00");
-            addLog(`!!! MEV STRIKE SUCCESSFUL !!!`, "#00ff00");
-            addLog(`TARGET: ${data.pair}`, "#fff");
-            addLog(`PROFIT: +$${data.profit.toFixed(2)} USDT`, "#00ff00");
-            addLog(`TX_HASH: ${data.hash}`, "#00ffff");
-            addLog(`------------------------------------`, "#00ff00");
+            addLog(`>>> MEV EXECUTION SUCCESS <<<`, "#10b981");
+            addLog(`Asset  : ${data.pair}`, "#e2e8f0");
+            addLog(`Yield  : +$${data.profit.toFixed(2)} USD`, "#10b981");
+            addLog(`TxHash : ${data.hash.substring(0,20)}...`, "#0ea5e9");
             
             triggerMatrixExtraction();
         });
     }
 
-    // 3. TERMINAL LOGIC
+    // TERMINAL LOGIC
     const terminal = document.getElementById('terminal');
-    function getTimestamp() { const d = new Date(); return `${d.getHours().toString().padStart(2,'0')}:${d.getMinutes().toString().padStart(2,'0')}:${d.getSeconds().toString().padStart(2,'0')}.${d.getMilliseconds().toString().padStart(3,'0')}`; }
+    function getTimestamp() { const d = new Date(); return `${d.getHours().toString().padStart(2,'0')}:${d.getMinutes().toString().padStart(2,'0')}:${d.getSeconds().toString().padStart(2,'0')}`; }
     
-    function addLog(msg, color = "#00ff00") {
-        if(terminal.children.length > 100) terminal.removeChild(terminal.firstChild);
+    function addLog(msg, color = "#94a3b8") {
+        if(terminal.children.length > 50) terminal.removeChild(terminal.firstChild);
         const p = document.createElement('div');
-        p.style.marginBottom = "3px";
+        p.style.marginBottom = "4px";
         p.innerHTML = `<span class="log-time">[${getTimestamp()}]</span> <span style="color:${color};">${msg}</span>`;
         terminal.appendChild(p);
         terminal.scrollTop = terminal.scrollHeight;
     }
-    addLog("System initialized. Awaiting user auth.");
+    addLog("Execution Node initialized. Standby for auth.", "#64748b");
 
-    // 4. MATRIX EXTRACTION CANVAS
+    // HIGH-TECH CANVAS (WBNB BASE ROUTING MAP)
     const canvas = document.getElementById('matrixCanvas');
     const ctx = canvas.getContext('2d');
     let particles = [];
@@ -315,10 +372,10 @@
     }
     window.addEventListener('resize', resize); resize();
 
-    const walletNode = { radius: 15, pulse: 0 };
+    const wbnbNode = { radius: 12, pulse: 0 };
     const dexNodes = [];
-    for(let i=0; i<15; i++) {
-        dexNodes.push({ angle: (Math.PI * 2 / 15) * i, dist: 80 + Math.random() * 20 });
+    for(let i=0; i<11; i++) {
+        dexNodes.push({ angle: (Math.PI * 2 / 11) * i, dist: 60 + Math.random() * 20 });
     }
 
     function triggerMatrixExtraction() {
@@ -326,52 +383,55 @@
         const startX = (canvas.width/2) + Math.cos(dex.angle) * dex.dist;
         const startY = (canvas.height/2) + Math.sin(dex.angle) * dex.dist;
         
-        for(let i=0; i<20; i++) {
+        for(let i=0; i<15; i++) {
             particles.push({
                 x: startX + (Math.random() * 10 - 5), y: startY + (Math.random() * 10 - 5),
                 tx: canvas.width/2, ty: canvas.height/2,
-                speed: 0.03 + Math.random() * 0.05, progress: 0
+                speed: 0.04 + Math.random() * 0.06, progress: 0
             });
         }
-        walletNode.pulse = 1; 
+        wbnbNode.pulse = 1; 
     }
 
     function drawCanvas() {
-        ctx.fillStyle = "rgba(0, 0, 0, 0.2)"; // Trailing effect
+        ctx.fillStyle = "rgba(2, 6, 23, 0.3)"; 
         ctx.fillRect(0, 0, canvas.width, canvas.height); 
         const cx = canvas.width/2; const cy = canvas.height/2;
 
         // Draw Network Lines
-        ctx.strokeStyle = engineRunning ? 'rgba(0, 255, 0, 0.1)' : 'rgba(0, 255, 0, 0.02)';
+        ctx.strokeStyle = engineRunning ? 'rgba(14, 165, 233, 0.15)' : 'rgba(255, 255, 255, 0.02)';
         ctx.lineWidth = 1;
         dexNodes.forEach(dex => {
             const dx = cx + Math.cos(dex.angle) * dex.dist;
             const dy = cy + Math.sin(dex.angle) * dex.dist;
             ctx.beginPath(); ctx.moveTo(dx, dy); ctx.lineTo(cx, cy); ctx.stroke();
             
-            ctx.fillStyle = engineRunning ? '#00ffff' : '#111';
-            ctx.fillRect(dx-2, dy-2, 4, 4); 
+            ctx.fillStyle = engineRunning ? '#3b82f6' : '#333';
+            ctx.beginPath(); ctx.arc(dx, dy, 2.5, 0, Math.PI*2); ctx.fill();
         });
 
         // Draw Data Packets
-        ctx.fillStyle = '#00ff00';
+        ctx.fillStyle = '#10b981';
         for (let i = particles.length - 1; i >= 0; i--) {
             let p = particles[i];
             p.progress += p.speed;
             const currentX = p.x + (p.tx - p.x) * p.progress;
             const currentY = p.y + (p.ty - p.y) * p.progress;
-            ctx.fillRect(currentX, currentY, 3, 3);
+            ctx.beginPath(); ctx.arc(currentX, currentY, 1.5, 0, Math.PI*2); ctx.fill();
             if (p.progress >= 1) particles.splice(i, 1);
         }
 
-        // Center Wallet
-        if(walletNode.pulse > 0) walletNode.pulse -= 0.05;
-        const currentRadius = walletNode.radius + (walletNode.pulse * 10);
+        // Center WBNB Base
+        if(wbnbNode.pulse > 0) wbnbNode.pulse -= 0.05;
+        const currentRadius = wbnbNode.radius + (wbnbNode.pulse * 8);
         
-        ctx.strokeStyle = '#00ff00';
+        ctx.strokeStyle = engineRunning ? '#0ea5e9' : '#333';
         ctx.beginPath(); ctx.arc(cx, cy, currentRadius, 0, Math.PI*2); ctx.stroke();
-        ctx.fillStyle = '#000'; ctx.fill();
-        ctx.fillStyle = '#00ff00'; ctx.fillText("WALLET", cx - 18, cy + 4);
+        ctx.fillStyle = '#0f172a'; ctx.fill();
+        
+        ctx.fillStyle = engineRunning ? '#f8fafc' : '#555';
+        ctx.font = "10px Inter";
+        ctx.fillText("WBNB", cx - 14, cy + 4);
 
         requestAnimationFrame(drawCanvas);
     } 
