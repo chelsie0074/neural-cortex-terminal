@@ -9,109 +9,101 @@
     <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script> 
     
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@300;400;600&family=Inter:wght@400;600;800&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@300;400;600;700&family=Inter:wght@400;600;800&display=swap');
         
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: #3b82f6; border-radius: 10px; }
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: #050505; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
 
         body { 
-            background-color: #050b14; 
-            color: #e2e8f0; 
+            background-color: #030712; 
+            color: #94a3b8; 
             font-family: 'Inter', sans-serif; 
             overflow: hidden; 
             height: 100vh; 
             display: flex; 
             flex-direction: column; 
-            background-image: 
-                radial-gradient(circle at 15% 50%, rgba(14, 165, 233, 0.08), transparent 25%),
-                radial-gradient(circle at 85% 30%, rgba(16, 185, 129, 0.05), transparent 25%);
         }
 
         /* HEADER */
         header { 
             display: flex; justify-content: space-between; align-items: center; 
-            padding: 15px 30px; 
-            background: rgba(15, 23, 42, 0.6);
-            backdrop-filter: blur(12px);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
+            padding: 12px 25px; 
+            background: #0f172a;
+            border-bottom: 1px solid #1e293b;
             z-index: 10;
         }
-        .logo { font-size: 1.2rem; font-weight: 800; color: #f8fafc; letter-spacing: 1px; display: flex; align-items: center; gap: 10px;}
-        .logo span { color: #3b82f6; font-family: 'Fira Code', monospace; font-size: 0.9rem; font-weight: 400; background: rgba(59, 130, 246, 0.1); padding: 4px 8px; border-radius: 4px;}
+        .logo { font-size: 1.1rem; font-weight: 800; color: #f8fafc; letter-spacing: 1px; display: flex; align-items: center; gap: 10px;}
+        .logo span { color: #0ea5e9; font-family: 'Fira Code', monospace; font-size: 0.85rem; font-weight: 600; background: rgba(14, 165, 233, 0.1); padding: 4px 8px; border-radius: 4px;}
         
         .controls { display: flex; gap: 15px; }
         .btn { 
-            background: rgba(30, 41, 59, 0.8); border: 1px solid rgba(255,255,255,0.1); 
-            color: #cbd5e1; padding: 8px 24px; font-family: 'Fira Code', monospace; 
-            font-size: 0.85rem; cursor: pointer; border-radius: 6px; transition: all 0.3s ease; 
+            background: #0f172a; border: 1px solid #334155; 
+            color: #94a3b8; padding: 6px 18px; font-family: 'Fira Code', monospace; 
+            font-size: 0.8rem; cursor: pointer; border-radius: 4px; transition: all 0.2s ease; 
         }
-        .btn:hover { background: rgba(59, 130, 246, 0.15); border-color: #3b82f6; color: #fff; }
-        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
-        .btn-engine.active { background: rgba(16, 185, 129, 0.1); border-color: #10b981; color: #10b981; box-shadow: 0 0 15px rgba(16, 185, 129, 0.2); }
-        .btn-engine.active:hover { background: #10b981; color: #000; }
+        .btn:hover { background: #1e293b; color: #f8fafc; border-color: #475569; }
+        .btn-engine.active { background: rgba(16, 185, 129, 0.1); border-color: #10b981; color: #10b981; }
 
         /* LAYOUT */
         .container { 
-            display: grid; grid-template-columns: 320px 1fr 400px; gap: 20px; 
-            padding: 20px; height: calc(100vh - 65px); 
+            display: grid; grid-template-columns: 300px 1fr 450px; gap: 15px; 
+            padding: 15px; height: calc(100vh - 55px); 
         }
         
-        /* GLASS PANELS */
+        /* PANELS */
         .panel { 
-            background: rgba(15, 23, 42, 0.4);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            border-radius: 12px;
-            padding: 20px; 
+            background: #0b0f19;
+            border: 1px solid #1e293b;
+            border-radius: 8px;
+            padding: 15px; 
             display: flex; flex-direction: column; overflow: hidden; 
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
         }
         
-        h2 { font-size: 0.8rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 20px; font-weight: 600; display: flex; justify-content: space-between; }
-        
-        /* METRICS */
-        .pnl-box { background: rgba(0,0,0,0.2); padding: 20px; border-radius: 8px; border: 1px solid rgba(16, 185, 129, 0.1); text-align: center; margin-bottom: 20px;}
-        .pnl-value { font-size: 3rem; color: #10b981; font-family: 'Fira Code', monospace; font-weight: 600; text-shadow: 0 0 20px rgba(16,185,129,0.4); margin: 5px 0; }
-        
-        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; font-family: 'Fira Code', monospace; font-size: 0.75rem; color: #64748b;}
-        .stat-card { background: rgba(0,0,0,0.2); padding: 12px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.03); }
-        .stat-card span { display: block; color: #f8fafc; font-size: 1.1rem; margin-top: 5px; font-weight: 600;}
-        .status-online { color: #10b981 !important; text-shadow: 0 0 10px rgba(16,185,129,0.5); }
-        .status-offline { color: #ef4444 !important; }
+        h2 { font-size: 0.75rem; color: #64748b; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 15px; font-weight: 700; display: flex; justify-content: space-between; align-items: center;}
+        .live-dot { height: 8px; width: 8px; background-color: #ef4444; border-radius: 50%; display: inline-block; box-shadow: 0 0 8px #ef4444; animation: pulse 1.5s infinite; }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
 
-        /* MARKET WATCH TABLE */
-        .table-container { flex: 1; overflow-y: auto; background: rgba(0,0,0,0.15); border-radius: 8px; border: 1px solid rgba(255,255,255,0.03); }
-        table { width: 100%; font-size: 0.8rem; border-collapse: collapse; font-family: 'Fira Code', monospace; }
-        th { text-align: left; padding: 12px 15px; color: #94a3b8; font-weight: 600; position: sticky; top: 0; background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(5px); font-family: 'Inter', sans-serif; font-size: 0.7rem; letter-spacing: 1px;}
-        td { padding: 10px 15px; border-bottom: 1px solid rgba(255,255,255,0.02); color: #cbd5e1; }
+        /* METRICS */
+        .pnl-box { background: #0f172a; padding: 20px; border-radius: 6px; border: 1px solid #1e293b; text-align: center; margin-bottom: 15px;}
+        .pnl-value { font-size: 2.8rem; color: #10b981; font-family: 'Fira Code', monospace; font-weight: 700; text-shadow: 0 0 15px rgba(16,185,129,0.2); margin: 5px 0; }
         
-        /* DATA COLORS */
+        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-family: 'Fira Code', monospace; font-size: 0.7rem; color: #64748b;}
+        .stat-card { background: #0f172a; padding: 10px; border-radius: 4px; border: 1px solid #1e293b; }
+        .stat-card span { display: block; color: #f8fafc; font-size: 1rem; margin-top: 4px; font-weight: 600;}
+        
+        /* TABLE */
+        .table-container { flex: 1; overflow-y: auto; background: #0f172a; border-radius: 6px; border: 1px solid #1e293b; }
+        table { width: 100%; font-size: 0.75rem; border-collapse: collapse; font-family: 'Fira Code', monospace; }
+        th { text-align: left; padding: 10px 12px; color: #64748b; font-weight: 600; position: sticky; top: 0; background: #0b0f19; border-bottom: 1px solid #1e293b; font-family: 'Inter', sans-serif; font-size: 0.65rem; letter-spacing: 1px;}
+        td { padding: 8px 12px; border-bottom: 1px solid #1e293b; color: #cbd5e1; }
+        
+        /* COLORS */
         .text-green { color: #10b981; font-weight: 600; }
         .text-orange { color: #f59e0b; }
+        .text-red { color: #ef4444; }
         .text-gray { color: #475569; }
         .text-cyan { color: #0ea5e9; }
-        .row-strike { background: rgba(16, 185, 129, 0.1); border-left: 3px solid #10b981; }
+        .row-strike { background: rgba(16, 185, 129, 0.05); border-left: 2px solid #10b981; }
 
-        /* TERMINAL */
-        .terminal-container { flex: 1; display: flex; flex-direction: column; background: #020617; border-radius: 8px; border: 1px solid rgba(255,255,255,0.05); overflow: hidden;}
-        .terminal-header { background: #0f172a; color: #64748b; padding: 8px 15px; font-size: 0.7rem; font-family: 'Fira Code', monospace; display: flex; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.05);}
-        .terminal { flex: 1; overflow-y: auto; padding: 15px; font-size: 0.75rem; line-height: 1.6; font-family: 'Fira Code', monospace; color: #94a3b8; }
-        .log-time { color: #3b82f6; margin-right: 8px; opacity: 0.7; }
+        /* TERMINAL SYNCED */
+        .terminal-container { flex: 1; display: flex; flex-direction: column; background: #050505; border-radius: 6px; border: 1px solid #1e293b; overflow: hidden;}
+        .terminal-header { background: #0f172a; color: #64748b; padding: 8px 12px; font-size: 0.65rem; font-family: 'Fira Code', monospace; border-bottom: 1px solid #1e293b; display: flex; justify-content: space-between;}
+        .terminal { flex: 1; overflow-y: auto; padding: 12px; font-size: 0.7rem; line-height: 1.5; font-family: 'Fira Code', monospace; color: #94a3b8; }
+        .log-time { color: #64748b; margin-right: 8px; }
 
-        /* CANVAS */
-        .canvas-container { height: 180px; background: #020617; border-radius: 8px; border: 1px solid rgba(255,255,255,0.05); margin-bottom: 20px; position: relative; overflow: hidden; }
+        /* CANVAS RADAR */
+        .canvas-container { height: 180px; background: #050505; border-radius: 6px; border: 1px solid #1e293b; margin-bottom: 15px; position: relative; overflow: hidden; }
         canvas { width: 100%; height: 100%; display: block; }
-        .overlay-badge { position: absolute; top: 10px; left: 10px; background: rgba(59, 130, 246, 0.2); color: #3b82f6; padding: 3px 8px; border-radius: 4px; font-size: 0.65rem; font-family: 'Fira Code'; font-weight: 600; border: 1px solid rgba(59, 130, 246, 0.3);}
+        .overlay-badge { position: absolute; top: 10px; left: 10px; background: rgba(14, 165, 233, 0.1); color: #0ea5e9; padding: 3px 6px; border-radius: 3px; font-size: 0.6rem; font-family: 'Fira Code'; font-weight: 600; border: 1px solid rgba(14, 165, 233, 0.2);}
+        #scanTargetDisplay { position: absolute; bottom: 10px; right: 10px; color: #10b981; font-family: 'Fira Code'; font-size: 0.65rem; font-weight: 600;}
     </style>
 </head>
 <body>
 
     <header>
-        <div class="logo">OPENCLAW <span>OMNI-ANALYZER V14</span></div>
+        <div class="logo">OPENCLAW <span>OMNI-ANALYZER V14.5</span></div>
         <div class="controls">
             <button class="btn btn-engine" id="engineBtn" onclick="startEngine()" disabled>[ SYSTEM_STANDBY ]</button>
             <button class="btn" id="walletBtn" onclick="connectWallet()">CONNECT_NODE</button>
@@ -120,32 +112,33 @@
 
     <div class="container">
         <div class="panel">
-            <h2>Live Session Metrics <span>🔴 REC</span></h2>
+            <h2>Session Metrics <span class="live-dot"></span></h2>
             
             <div class="pnl-box">
-                <div style="color: #64748b; font-size: 0.75rem; font-weight: 600; letter-spacing: 1px;">TOTAL EXTRACTED YIELD</div>
+                <div style="color: #64748b; font-size: 0.7rem; font-weight: 700; letter-spacing: 1px;">TOTAL EXTRACTED YIELD</div>
                 <div class="pnl-value" id="pnl">+$0.00</div>
-                <div style="color: #10b981; font-size: 0.8rem; font-family: 'Fira Code';">~ 0.0000 WBNB</div>
+                <div style="color: #0ea5e9; font-size: 0.75rem; font-family: 'Fira Code';">≈ 0.0000 WBNB</div>
             </div>
             
             <div class="stats-grid">
-                <div class="stat-card">BASE_ASSET <span class="text-cyan">WBNB</span></div>
-                <div class="stat-card">RPC_LATENCY <span id="pingTxt">-- ms</span></div>
-                <div class="stat-card">MEMPOOL_RPC <span class="text-green">SECURE</span></div>
-                <div class="stat-card">ENGINE_STATE <span id="botStatus" class="status-offline">OFFLINE</span></div>
+                <div class="stat-card">ROUTING_BASE <span class="text-cyan">WBNB</span></div>
+                <div class="stat-card">LATENCY <span id="pingTxt">-- ms</span></div>
+                <div class="stat-card">MEMPOOL <span class="text-green">LINKED</span></div>
+                <div class="stat-card">STATUS <span id="botStatus" class="text-red">OFFLINE</span></div>
             </div>
 
-            <div style="margin-top: auto; font-family: 'Fira Code'; font-size: 0.7rem; color: #475569; line-height: 1.8; background: rgba(0,0,0,0.2); padding: 15px; border-radius: 6px;">
+            <div style="margin-top: auto; font-family: 'Fira Code'; font-size: 0.65rem; color: #475569; line-height: 1.8; background: #0f172a; padding: 12px; border-radius: 4px; border: 1px solid #1e293b;">
                 > MATRIX: 11_NATIVE_POOLS<br>
-                > ROUTING: WBNB_BASE_PAIR<br>
                 > BYPASS: CHECKSUM_EIP55<br>
-                > THRESHOLD: > $0.01 NET
+                > TARGET: > $0.01 NET PROFIT<br>
+                > LOGGING: VERBOSE_SYNC
             </div>
         </div>
 
         <div class="panel">
             <div class="canvas-container">
-                <div class="overlay-badge">LIQUIDITY ROUTING VISUALIZER</div>
+                <div class="overlay-badge">WBNB LIQUIDITY RADAR</div>
+                <div id="scanTargetDisplay">AWAITING ENGINE...</div>
                 <canvas id="matrixCanvas"></canvas>
             </div>
 
@@ -156,8 +149,8 @@
                         <tr>
                             <th>ASSET</th>
                             <th>ROUTE PATH</th>
-                            <th>GROSS SPREAD</th>
-                            <th style="text-align:right;">ANALYZER REASON</th>
+                            <th>RAW SPREAD</th>
+                            <th style="text-align:right;">ANALYZER LOGIC</th>
                         </tr>
                     </thead>
                     <tbody id="pairBody"></tbody>
@@ -165,11 +158,11 @@
             </div>
         </div>
 
-        <div class="panel" style="padding: 0; background: transparent; border: none; box-shadow: none;">
+        <div class="panel" style="padding: 0; background: transparent; border: none;">
             <div class="terminal-container">
                 <div class="terminal-header">
-                    <span>root@execution-node ~ tail -f /var/log/mev.log</span>
-                    <span style="color: #10b981;">● LIVE</span>
+                    <span>root@execution-node ~ tail -f mev.log</span>
+                    <span class="text-green">● SYNCED</span>
                 </div>
                 <div class="terminal" id="terminal"></div>
             </div>
@@ -182,7 +175,6 @@
     let currentPnl = 0.00;
     let currentBNB = 0.0000;
     
-    // V14 Base Symbols Watchlist
     const watchList = [
         "CAKE", "DOGE", "FLOKI", "BAKE", "TWT", 
         "SHIB", "ETH", "BTCB", "XRP", "ADA", "LINK", 
@@ -194,8 +186,8 @@
     const pairBody = document.getElementById('pairBody');
     watchList.forEach(pair => {
         pairBody.innerHTML += `<tr id="row-${pair}">
-            <td style="font-weight: 600; color: #f8fafc;">${pair}</td>
-            <td class="text-gray" id="route-${pair}">WAITING...</td>
+            <td style="font-weight: 700; color: #f8fafc;">${pair}</td>
+            <td class="text-gray" id="route-${pair}">WAITING_DATA...</td>
             <td class="text-gray" id="spread-${pair}">0.000%</td>
             <td style="text-align:right;" class="text-gray" id="status-${pair}">STANDBY</td>
         </tr>`;
@@ -204,32 +196,19 @@
     async function connectWallet() {
         const wBtn = document.getElementById('walletBtn');
         const eBtn = document.getElementById('engineBtn');
-        
         wBtn.innerText = "AUTHENTICATING...";
 
-        if (typeof window.ethereum !== 'undefined' && window.location.protocol !== 'file:') {
-            try {
-                const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
-                wBtn.innerText = `${accounts[0].substring(0, 6)}...${accounts[0].substring(38)}`;
-                wBtn.style.background = "rgba(16, 185, 129, 0.1)"; wBtn.style.color = "#10b981"; wBtn.style.borderColor = "#10b981";
-                isConnected = true;
-                eBtn.disabled = false;
-                addLog(`Wallet authenticated. Node access granted.`, "#10b981");
-            } catch (err) {
-                wBtn.innerText = "AUTH FAILED";
-                setTimeout(() => wBtn.innerText = "CONNECT_NODE", 2000);
-            }
-        } else {
+        setTimeout(() => {
             wBtn.innerText = "0xROOT...ADMIN";
-            wBtn.style.background = "rgba(16, 185, 129, 0.1)"; wBtn.style.color = "#10b981"; wBtn.style.borderColor = "#10b981";
+            wBtn.style.color = "#10b981"; wBtn.style.borderColor = "#10b981";
             isConnected = true;
             eBtn.disabled = false;
-            addLog(`Local bypass authorized. Systems primed.`, "#10b981");
-        }
+            addTerminalStream(`Local bypass authorized. Engine primed.`, "#10b981");
+        }, 800);
     }
 
     let lastUiUpdates = {}; 
-    const UI_THROTTLE_MS = 200; 
+    let currentScanTarget = "";
 
     function startEngine() {
         if(!isConnected || engineRunning) return;
@@ -239,47 +218,37 @@
         eBtn.className = "btn btn-engine active";
         eBtn.innerText = "[ SCANNING_POOLS ]";
         
-        const botStatus = document.getElementById('botStatus');
-        botStatus.innerText = "ONLINE";
-        botStatus.className = "status-online";
+        document.getElementById('botStatus').innerText = "ONLINE";
+        document.getElementById('botStatus').className = "text-green";
         document.getElementById('pingTxt').innerText = "18ms";
         
-        addLog(`Initiating WBNB base-routing protocols...`, "#0ea5e9");
+        addTerminalStream(`Initiating WBNB base-routing protocols...`, "#0ea5e9");
         
-        // 🔴🔴🔴 PUT YOUR GITHUB CODESPACES / VERCEL URL HERE 🔴🔴🔴
+        // 🔴🔴🔴 GITHUB CODESPACES URL HERE 🔴🔴🔴
         const socket = io('https://crispy-adventure-v6xv99xp7gj62w6j5-8080.app.github.dev'); 
 
         socket.on('connect', () => {
-            addLog(`Secure WebSocket established. Receiving Omni-Matrix data.`, "#10b981");
+            addTerminalStream(`Secure WebSocket established. Receiving data.`, "#10b981");
         });
 
         socket.on('disconnect', () => {
             engineRunning = false;
-            botStatus.innerText = "OFFLINE";
-            botStatus.className = "status-offline";
+            document.getElementById('botStatus').innerText = "OFFLINE";
+            document.getElementById('botStatus').className = "text-red";
             eBtn.className = "btn btn-engine";
             eBtn.innerText = "[ CONNECTION_LOST ]";
-            document.getElementById('pingTxt').innerText = "-- ms";
-            addLog(`[FATAL] Execution Node disconnected. Pipeline severed.`, "#ef4444");
-        });
-
-        socket.on('connect_error', () => {
-            if(engineRunning) {
-                engineRunning = false;
-                botStatus.innerText = "ERROR";
-                botStatus.className = "status-offline";
-                eBtn.className = "btn btn-engine";
-                eBtn.innerText = "[ RETRYING_LINK ]";
-                addLog(`[WARN] RPC timeout or connection refused. Retrying...`, "#f59e0b");
-            }
+            addTerminalStream(`[FATAL] Execution Node disconnected.`, "#ef4444");
         });
 
         // 🟢 V14 OMNI-ANALYZER FEED LISTENER
         socket.on('live_scan', (data) => {
             if(!engineRunning) return;
             
+            currentScanTarget = data.pair; // Update radar text
+            document.getElementById('scanTargetDisplay').innerText = `TARGET LOCK: ${data.pair}`;
+
             const now = Date.now();
-            if (lastUiUpdates[data.pair] && (now - lastUiUpdates[data.pair] < UI_THROTTLE_MS)) return;
+            if (lastUiUpdates[data.pair] && (now - lastUiUpdates[data.pair] < 200)) return;
             lastUiUpdates[data.pair] = now;
 
             const spreadEl = document.getElementById(`spread-${data.pair}`);
@@ -290,13 +259,13 @@
             if(spreadEl) {
                 const spreadVal = parseFloat(data.spread);
                 
-                // Color Logic for Values
+                // Update Table Colors
                 if(spreadVal > 0) {
                     spreadEl.innerText = "+" + spreadVal.toFixed(3) + "%";
                     spreadEl.className = "text-green";
                 } else if (spreadVal < 0) {
                     spreadEl.innerText = spreadVal.toFixed(3) + "%";
-                    spreadEl.className = "text-orange";
+                    spreadEl.className = spreadVal < -10 ? "text-red" : "text-orange";
                 } else {
                     spreadEl.innerText = "0.000%";
                     spreadEl.className = "text-gray";
@@ -305,133 +274,141 @@
                 routeEl.innerText = data.route || "SEARCHING...";
                 routeEl.className = data.route.includes("MATRIX") ? "text-gray" : "text-cyan";
 
-                // V14 REASON LOGIC
-                statusEl.innerText = data.reason;
-                if(data.reason === "STRIKING") {
+                // Fix 'Undefined' Logic & Update Table Reason
+                let safeReason = data.reason;
+                if (!safeReason || safeReason === "undefined") {
+                    safeReason = spreadVal < 0 ? "FEE > SPREAD" : "ANALYZING...";
+                }
+
+                statusEl.innerText = safeReason;
+                
+                // Color Logic for Reason
+                if(safeReason === "STRIKING") {
                     statusEl.className = "text-green";
                     rowEl.className = "row-strike";
-                } else if (data.reason.includes("REJECTED")) {
+                } else if (safeReason.includes("REJECTED") || safeReason.includes("FEE")) {
                     statusEl.className = "text-orange";
                     rowEl.className = "";
-                } else if (data.reason.includes("LOW LIQUIDITY")) {
+                } else if (safeReason.includes("LOW") || safeReason.includes("ANALYZING")) {
                     statusEl.className = "text-gray";
                     rowEl.className = "";
-                } else {
-                    statusEl.className = "text-gray";
-                    rowEl.className = "";
+                }
+
+                // 🟢 SYNC TO RIGHT TERMINAL (Mirroring Backend Logs)
+                if(!data.route.includes("MATRIX")) {
+                    let termColor = spreadVal > 0 ? "#10b981" : (spreadVal < -5 ? "#ef4444" : "#f59e0b");
+                    let termMsg = `[SCAN] ${data.pair.padEnd(5)} | Spread: ${spreadVal.toFixed(3)}% | Route: ${data.route}`;
+                    addTerminalStream(termMsg, termColor);
+                } else if (Math.random() > 0.8) {
+                    // Occasionally log skipped ones so terminal isn't totally flooded but shows activity
+                    addTerminalStream(`[WARN] ${data.pair.padEnd(5)} | No Route (Insufficient Liquidity)`, "#475569");
                 }
             }
         });
 
-        // EXECUTION LISTENER
         socket.on('trade_success', (data) => {
             currentPnl += data.profit;
-            currentBNB += (data.profit / 600); // Rough estimate for UI
+            currentBNB += (data.profit / 600); 
             document.getElementById('pnl').innerText = "+$" + currentPnl.toFixed(2);
-            document.getElementById('pnl').nextElementSibling.innerText = `~ ${currentBNB.toFixed(4)} WBNB`;
+            document.getElementById('pnl').nextElementSibling.innerText = `≈ ${currentBNB.toFixed(4)} WBNB`;
             
             const rowEl = document.getElementById(`row-${data.pair}`);
             if(rowEl) {
                 document.getElementById(`status-${data.pair}`).innerText = "YIELD_EXTRACTED";
                 document.getElementById(`status-${data.pair}`).className = "text-green";
-                rowEl.style.background = "rgba(16, 185, 129, 0.2)";
-                setTimeout(() => { rowEl.style.background = "transparent"; }, 3000);
             }
 
-            addLog(`>>> MEV EXECUTION SUCCESS <<<`, "#10b981");
-            addLog(`Asset  : ${data.pair}`, "#e2e8f0");
-            addLog(`Yield  : +$${data.profit.toFixed(2)} USD`, "#10b981");
-            addLog(`TxHash : ${data.hash.substring(0,20)}...`, "#0ea5e9");
+            addTerminalStream(`----------------------------------------`, "#10b981");
+            addTerminalStream(`[EXECUTION] MEV STRIKE SUCCESSFUL`, "#10b981");
+            addTerminalStream(`Target: ${data.pair} | Yield: +$${data.profit.toFixed(2)}`, "#f8fafc");
+            addTerminalStream(`TxHash: ${data.hash}`, "#0ea5e9");
+            addTerminalStream(`----------------------------------------`, "#10b981");
             
-            triggerMatrixExtraction();
+            triggerRadarPulse();
         });
     }
 
-    // TERMINAL LOGIC
+    // 🟢 TERMINAL STREAM LOGIC
     const terminal = document.getElementById('terminal');
-    function getTimestamp() { const d = new Date(); return `${d.getHours().toString().padStart(2,'0')}:${d.getMinutes().toString().padStart(2,'0')}:${d.getSeconds().toString().padStart(2,'0')}`; }
+    function getTimestamp() { const d = new Date(); return `${d.getHours().toString().padStart(2,'0')}:${d.getMinutes().toString().padStart(2,'0')}:${d.getSeconds().toString().padStart(2,'0')}.${d.getMilliseconds().toString().padStart(3,'0')}`; }
     
-    function addLog(msg, color = "#94a3b8") {
+    function addTerminalStream(msg, color = "#94a3b8") {
         if(terminal.children.length > 50) terminal.removeChild(terminal.firstChild);
         const p = document.createElement('div');
-        p.style.marginBottom = "4px";
+        p.style.marginBottom = "2px";
         p.innerHTML = `<span class="log-time">[${getTimestamp()}]</span> <span style="color:${color};">${msg}</span>`;
         terminal.appendChild(p);
         terminal.scrollTop = terminal.scrollHeight;
     }
-    addLog("Execution Node initialized. Standby for auth.", "#64748b");
 
-    // HIGH-TECH CANVAS (WBNB BASE ROUTING MAP)
+    // 🟢 HIGH-TECH ROTATING RADAR CANVAS
     const canvas = document.getElementById('matrixCanvas');
     const ctx = canvas.getContext('2d');
     let particles = [];
+    let globalRotation = 0; // The rotation variable
     
-    function resize() {
-        canvas.width = canvas.parentElement.clientWidth; 
-        canvas.height = canvas.parentElement.clientHeight;
-    }
+    function resize() { canvas.width = canvas.parentElement.clientWidth; canvas.height = canvas.parentElement.clientHeight; }
     window.addEventListener('resize', resize); resize();
 
-    const wbnbNode = { radius: 12, pulse: 0 };
+    const wbnbNode = { radius: 15, pulse: 0 };
     const dexNodes = [];
-    for(let i=0; i<11; i++) {
-        dexNodes.push({ angle: (Math.PI * 2 / 11) * i, dist: 60 + Math.random() * 20 });
-    }
+    for(let i=0; i<11; i++) { dexNodes.push({ angle: (Math.PI * 2 / 11) * i, dist: 65 }); }
 
-    function triggerMatrixExtraction() {
-        const dex = dexNodes[Math.floor(Math.random() * dexNodes.length)];
-        const startX = (canvas.width/2) + Math.cos(dex.angle) * dex.dist;
-        const startY = (canvas.height/2) + Math.sin(dex.angle) * dex.dist;
-        
-        for(let i=0; i<15; i++) {
+    function triggerRadarPulse() {
+        wbnbNode.pulse = 1; 
+        for(let i=0; i<20; i++) {
             particles.push({
-                x: startX + (Math.random() * 10 - 5), y: startY + (Math.random() * 10 - 5),
-                tx: canvas.width/2, ty: canvas.height/2,
-                speed: 0.04 + Math.random() * 0.06, progress: 0
+                angle: Math.random() * Math.PI * 2, dist: 0,
+                speed: 1 + Math.random() * 2, maxDist: 100
             });
         }
-        wbnbNode.pulse = 1; 
     }
 
     function drawCanvas() {
-        ctx.fillStyle = "rgba(2, 6, 23, 0.3)"; 
+        ctx.fillStyle = "rgba(5, 5, 5, 0.3)"; 
         ctx.fillRect(0, 0, canvas.width, canvas.height); 
         const cx = canvas.width/2; const cy = canvas.height/2;
 
-        // Draw Network Lines
-        ctx.strokeStyle = engineRunning ? 'rgba(14, 165, 233, 0.15)' : 'rgba(255, 255, 255, 0.02)';
+        if(engineRunning) globalRotation += 0.003; // Slowly rotate the network
+
+        // Draw Network Lines & Nodes
         ctx.lineWidth = 1;
-        dexNodes.forEach(dex => {
-            const dx = cx + Math.cos(dex.angle) * dex.dist;
-            const dy = cy + Math.sin(dex.angle) * dex.dist;
+        dexNodes.forEach((dex, index) => {
+            const currentAngle = dex.angle + globalRotation;
+            const dx = cx + Math.cos(currentAngle) * dex.dist;
+            const dy = cy + Math.sin(currentAngle) * dex.dist;
+            
+            // Connecting line
+            ctx.strokeStyle = engineRunning ? 'rgba(14, 165, 233, 0.15)' : 'rgba(255, 255, 255, 0.02)';
             ctx.beginPath(); ctx.moveTo(dx, dy); ctx.lineTo(cx, cy); ctx.stroke();
             
-            ctx.fillStyle = engineRunning ? '#3b82f6' : '#333';
-            ctx.beginPath(); ctx.arc(dx, dy, 2.5, 0, Math.PI*2); ctx.fill();
+            // Node
+            ctx.fillStyle = engineRunning ? '#0ea5e9' : '#334155';
+            ctx.beginPath(); ctx.arc(dx, dy, 2, 0, Math.PI*2); ctx.fill();
         });
 
-        // Draw Data Packets
+        // Profit Particles (Shoot out from center on strike)
         ctx.fillStyle = '#10b981';
         for (let i = particles.length - 1; i >= 0; i--) {
             let p = particles[i];
-            p.progress += p.speed;
-            const currentX = p.x + (p.tx - p.x) * p.progress;
-            const currentY = p.y + (p.ty - p.y) * p.progress;
-            ctx.beginPath(); ctx.arc(currentX, currentY, 1.5, 0, Math.PI*2); ctx.fill();
-            if (p.progress >= 1) particles.splice(i, 1);
+            p.dist += p.speed;
+            const px = cx + Math.cos(p.angle) * p.dist;
+            const py = cy + Math.sin(p.angle) * p.dist;
+            ctx.beginPath(); ctx.arc(px, py, 1.5, 0, Math.PI*2); ctx.fill();
+            if (p.dist >= p.maxDist) particles.splice(i, 1);
         }
 
         // Center WBNB Base
         if(wbnbNode.pulse > 0) wbnbNode.pulse -= 0.05;
-        const currentRadius = wbnbNode.radius + (wbnbNode.pulse * 8);
+        const currentRadius = wbnbNode.radius + (wbnbNode.pulse * 10);
         
-        ctx.strokeStyle = engineRunning ? '#0ea5e9' : '#333';
+        ctx.strokeStyle = engineRunning ? '#3b82f6' : '#334155';
         ctx.beginPath(); ctx.arc(cx, cy, currentRadius, 0, Math.PI*2); ctx.stroke();
         ctx.fillStyle = '#0f172a'; ctx.fill();
         
-        ctx.fillStyle = engineRunning ? '#f8fafc' : '#555';
-        ctx.font = "10px Inter";
-        ctx.fillText("WBNB", cx - 14, cy + 4);
+        ctx.fillStyle = engineRunning ? '#f8fafc' : '#64748b';
+        ctx.font = "bold 9px Inter";
+        ctx.fillText("WBNB", cx - 13, cy + 3);
 
         requestAnimationFrame(drawCanvas);
     } 
